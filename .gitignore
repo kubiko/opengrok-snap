@@ -1,0 +1,7 @@
+parts
+stage
+prime
+snap/plugins/__pycache__
+*.snap
+*.tar*
+.project
