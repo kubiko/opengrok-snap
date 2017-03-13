@@ -1,0 +1,187 @@
+name: opengrok
+summary: OpenGrok is a fast and usable source code search and cross reference engine
+description: |
+ OpenGrok is a fast and usable source code search and cross reference engine, written in Java.
+ It helps you search, cross-reference and navigate your source tree. It can understand various 
+ program file formats and version control histories of many source code management systems.
+
+confinement: strict
+grade: stable
+adopt-info: opengrok
+
+plugs:
+  source-location:
+    interface: content
+    target: $SNAP_COMMON/src
+  data-location:
+    interface: content
+    target: $SNAP_COMMON/data
+  src-updater:
+    interface: content
+    target: $SNAP/src-updater
+
+slots:
+  source-share:
+    interface: content
+    write:
+      - $SNAP_COMMON/src
+  tools:
+    interface: content
+    read:
+      - $SNAP/usr
+
+passthrough:
+    layout:
+        /usr/lib/git-core:
+            bind: $SNAP/usr/lib/git-core
+        /usr/share/git-core:
+            bind: $SNAP/usr/share/git-core
+
+apps:
+    opengrok:
+        command: bin/opengrok-control OpenGrok
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+        environment:
+            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
+            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+
+    messages:
+        command: bin/opengrok-control Messages
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+        environment:
+            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
+            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+
+    groups:
+        command: bin/opengrok-control Groups
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+        environment:
+            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
+            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+
+    tomcat:
+        command: bin/tomcat-control
+        daemon: simple
+        plugs:
+            - network-bind
+            - removable-media
+        environment:
+            # installation pathes are based of CATALINA_HOME
+            CATALINA_HOME: $SNAP
+            # writable pathes are based of CATALINA_BASE
+            CATALINA_BASE: $SNAP_COMMON
+            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
+            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+    help:
+        command: bin/help
+        adapter: none
+
+    update-source-daemon:
+        command: bin/update-src
+        daemon: simple
+        passthrough:
+            timer: 00:30~01:00
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+
+    update-index-daemon:
+        command: bin/opengrok-control OpenGrok index
+        daemon: simple
+        passthrough:
+            timer: 04:30~05:00
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+        environment:
+            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
+            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+
+    update-source:
+        command: bin/update-src
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+
+parts:
+    tomcat:
+        plugin: ant
+        source: https://github.com/apache/tomcat85.git
+        source-type: git
+        source-tag: TOMCAT_8_5_34
+        override-build: |
+            snapcraftctl build
+            cp -r output/build/* $SNAPCRAFT_PART_INSTALL
+
+    opengrok:
+        plugin: maven
+        source: https://github.com/OpenGrok/OpenGrok.git
+        source-type: git
+        # source-tag: '1.1-rcxx'
+        source-branch: master
+        build-packages:
+            - xmlstarlet
+            - libxml2-utils
+            - subversion
+        override-build: |
+            mvn -DskipTests=true -Dmaven.javadoc.skip=false -B -V compile package
+            snapcraftctl set-version $(git describe --tags)
+            mkdir -p ${SNAPCRAFT_PART_INSTALL}/var/opengrok/ ${SNAPCRAFT_PART_INSTALL}/src-updater
+            tar -xf distribution/target/opengrok-*.tar.gz -C $SNAPCRAFT_PART_INSTALL/var/opengrok --strip-components=1
+            sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = $SNAP_COMMON/logs/#g' \
+                $SNAPCRAFT_PART_INSTALL/var/opengrok/doc/logging.properties
+
+    # source control tools
+    tools:
+        plugin: nil
+        stage-packages:
+            - exuberant-ctags
+            - bzr
+            - cvs
+            - git
+            - gitk
+            - openssh-client
+            - mercurial
+            - monotone
+            - rcs
+            - cssc
+            - subversion
+            - coreutils
+            - curl
+        organize:
+            usr/share/bash-completion/completions/git: git-completion.bash
+
+    # helper scripts
+    glue:
+        source: glue
+        plugin: dump

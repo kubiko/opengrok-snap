@@ -1,0 +1,92 @@
+#!/bin/bash
+
+case $SNAP_ARCH in
+    amd64)
+        TRIPLET="x86_64-linux-gnu"
+        ;;
+    armhf)
+        TRIPLET="arm-linux-gnueabihf"
+        ;;
+    arm64)
+        TRIPLET="aarch64-linux-gnu"
+        ;;
+    *)
+        TRIPLET="$SNAP_ARCH-linux-gnu"
+        ;;
+esac
+
+export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${TRIPLET}:$SNAP/usr/lib/${TRIPLET}"
+export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+
+# per user ssh env
+SSH_ENV="${SNAP_USER_COMMON}/ssh-environment"
+
+# helper function to start own ssh-agent
+function start_agent {
+    ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    echo "ssh-agent succeefully started"
+    chmod 600 ${SSH_ENV}
+    . ${SSH_ENV} > /dev/null
+    if [ -e "${SSH_DIR}/id_rsa" ]; then
+        ssh-add;
+    else
+        echo "There is no identity under ${SSH_DIR} to be added, you might want to add it"
+    fi
+}
+
+# check what is real home for current user
+if [ -f "/etc/passwd" ] &&  [ "$(du /etc/passwd | cut -c -1)" != "0" ] ; then
+    SSH_DIR=$(grep ${USER} /etc/passwd | awk -F ":" '{ print $6}')/.ssh
+fi
+
+if [ -f "/var/lib/extrausers/passwd" ] && [ "$(du /var/lib/extrausers/passwd | cut -c -1)" != "0" ] ; then
+    SSH_DIR=$(grep ${USER} /var/lib/extrausers/passwd | awk -F ":" '{ print $6}')/.ssh
+fi
+
+
+if [ -d "${SSH_DIR}" ]; then
+    # Source SSH settings, if applicable
+    if [ -f "${SSH_ENV}" ]; then
+        unset SSH_AGENT_PID
+        unset SSH_AUTH_SOCK
+        . ${SSH_ENV} > /dev/null
+        if [ -z "${SSH_AGENT_PID}" ] || [ "x$(ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent)" = "x" ]; then
+           start_agent;
+        fi
+    else
+        start_agent
+    fi
+# else
+#    echo "There no ${SSH_DIR} no need for ssh-agent"
+fi
+
+# other settings outside of key settings for OpenGrok
+export OPENGROK_INSTANCE_BASE=${SNAP_COMMON}
+export OPENGROK_DISTRIBUTION_BASE=${SNAP}/var/opengrok/lib
+export OPENGROK_LOGGER_CONFIG_PATH=${SNAP_COMMON}/logging.properties
+export OPENGROK_APP_SERVER=Tomcat
+export OPENGROK_WAR_TARGET_TOMCAT=${SNAP_COMMON}/webapps
+export OPENGROK_TOMCAT_BASE=${SNAP_COMMON}
+
+export CATALINA_PID=${SNAP_DATA}/tomcat.pid
+export CATALINA_HOME=${SNAP}
+export CATALINA_BASE=${SNAP_COMMON}
+export CATALINA_TMPDIR=${SNAP_DATA}/tmp
+
+# finaly read settings
+source ${SNAP}/bin/config
+for key in ${keys[@]}
+do
+    default_value="DEFAULT_$key"
+    description="DESCRIPTION_$key"
+    snappy_key="KEY_$key"
+    value=$(snapctl get ${!snappy_key})
+    if [ "x$value" == "x" ]; then
+        echo -e "$key=${!default_value} (default value)"
+        export $key=${!default_value}
+    else
+        echo -e "$key=$value"
+        export $key=$value
+    fi
+done

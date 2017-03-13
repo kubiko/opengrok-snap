@@ -1,0 +1,7 @@
+#!/bin/bash
+
+$SNAP/bin/read-settings
+
+set -e
+set -x
+JAVA_OPTS="-Dport.shutdown=8005 -Dport.http=${HTTP_PORT} -Dport.https=${HTTPS_PORT}" $CATALINA_HOME/bin/catalina.sh run
