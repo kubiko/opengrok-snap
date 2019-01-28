@@ -1,6 +1,6 @@
 #!/bin/bash
 
-$SNAP/bin/read-settings
+source $SNAP/bin/read-settings
 
 set -e
 set -x

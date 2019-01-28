@@ -1,26 +1,5 @@
 #!/bin/bash
 
-case $SNAP_ARCH in
-    amd64)
-        TRIPLET="x86_64-linux-gnu"
-        ;;
-    armhf)
-        TRIPLET="arm-linux-gnueabihf"
-        ;;
-    arm64)
-        TRIPLET="aarch64-linux-gnu"
-        ;;
-    *)
-        TRIPLET="$SNAP_ARCH-linux-gnu"
-        ;;
-esac
-
-export PATH="$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$PATH"
-export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${TRIPLET}:$SNAP/usr/lib/${TRIPLET}"
-export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-
-# per user ssh env
-SSH_ENV="${SNAP_USER_COMMON}/ssh-environment"
 
 # helper function to start own ssh-agent
 function start_agent {
@@ -61,20 +40,8 @@ if [ -d "${SSH_DIR}" ]; then
 #    echo "There no ${SSH_DIR} no need for ssh-agent"
 fi
 
-# other settings outside of key settings for OpenGrok
-export OPENGROK_INSTANCE_BASE=${SNAP_COMMON}
-export OPENGROK_DISTRIBUTION_BASE=${SNAP}/var/opengrok/lib
-export OPENGROK_LOGGER_CONFIG_PATH=${SNAP_COMMON}/logging.properties
-export OPENGROK_APP_SERVER=Tomcat
-export OPENGROK_WAR_TARGET_TOMCAT=${SNAP_COMMON}/webapps
-export OPENGROK_TOMCAT_BASE=${SNAP_COMMON}
 
-export CATALINA_PID=${SNAP_DATA}/tomcat.pid
-export CATALINA_HOME=${SNAP}
-export CATALINA_BASE=${SNAP_COMMON}
-export CATALINA_TMPDIR=${SNAP_DATA}/tmp
-
-# finaly read settings
+# read settings
 source ${SNAP}/bin/config
 for key in ${keys[@]}
 do
@@ -90,3 +57,14 @@ do
         export $key=$value
     fi
 done
+
+
+# before runing any task, copy configurations to temp locaton where SNAP, SNAP_DATA, SNAP_COMMON can be updated
+cp -r ${SNAP_COMMON}/logging.properties /tmp
+cp -r ${SNAP_COMMON}/scripts /tmp
+find /tmp -type f | \
+  xargs sed -i -e 's#${SNAP}#'"${SNAP}"'#g' \
+               -e 's#${SNAP_COMMON}#'"${SNAP_COMMON}"'#g' \
+               -e 's#${SNAP_DATA}#'"${SNAP_DATA}"'#g' \
+               -e '#${HTTP_PORT}#'"${HTTP_PORT}"'#g' \
+               -e '#${WEBAPP_NAME}#'"${WEBAPP_NAME}"'#g'

@@ -1,29 +1,36 @@
 #!/bin/bash
 
 set -x
-exec >> $SNAP_COMMON/hook.log 2>&1
+exec >> ${SNAP_COMMON}/hook.log 2>&1
 echo "$(date '+%Y-%m-%d %H:%M:%S'): Entering hook"
 
 
 mkdir -p "$SNAP_COMMON/logs"
 mkdir -p "$SNAP_COMMON/temp"
 mkdir -p "$SNAP_COMMON/etc"
-if ! [ -d $SNAP_COMMON/conf ]; then
-    cp -rn $SNAP/conf $SNAP_COMMON/conf
+
+if ! [ -d ${SNAP_COMMON}/conf ]; then
+    cp -rn ${SNAP}/conf ${SNAP_COMMON}/conf
 fi
 
-if ! [ -d $SNAP_COMMON/webapps ]; then
-    cp -rn $SNAP/webapps $SNAP_COMMON/
-    cp $SNAP/var/opengrok/lib/*.war $SNAP_COMMON/webapps/
+if ! [ -d ${SNAP_COMMON}/webapps ]; then
+    cp -rn ${SNAP}/webapps ${SNAP_COMMON}/
+    cp ${SNAP}/dist/lib/*.war ${SNAP_COMMON}/webapps/
 fi
 
-if ! [ -f $SNAP_COMMON/logging.properties ]; then
-    cp $SNAP/var/opengrok/doc/logging.properties $SNAP_COMMON/
+if ! [ -f ${SNAP_COMMON}/logging.properties ]; then
+    cp ${SNAP}/dist/doc/logging.properties ${SNAP_COMMON}/
+fi
+
+if ! [ -d ${SNAP_COMMON}/scripts ]; then
+    cp -r ${SNAP}/scripts ${SNAP_COMMON}
 fi
 
 # update logger targer to $SNAP_COMMON
-sed -i 's#$SNAP_COMMON#'"$SNAP_COMMON"'#g' $SNAP_COMMON/logging.properties
+# sed -i 's#$SNAP_COMMON#'"$SNAP_COMMON"'#g' $SNAP_COMMON/logging.properties ${SNAP_COMMON}/scripts/*
+# sed -i 's#${SNAP_COMMON}#'"${SNAP_COMMON}"'#g' $SNAP_COMMON/logging.properties ${SNAP_COMMON}/scripts/*
+# sed -i 's#${SNAP}#'"${SNAP}"'#g' $SNAP_COMMON/logging.properties ${SNAP_COMMON}/scripts/*
 
-mkdir -p $SNAP_COMMON/src
-mkdir -p $SNAP_COMMON/data
-mkdir -p $SNAP_COMMON/logs
+mkdir -p ${SNAP_COMMON}/src
+mkdir -p ${SNAP_COMMON}/data
+mkdir -p ${SNAP_COMMON}/logs

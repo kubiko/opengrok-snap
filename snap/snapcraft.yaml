@@ -8,6 +8,7 @@ description: |
 confinement: strict
 grade: stable
 adopt-info: opengrok
+# base: core18
 
 plugs:
   source-location:
@@ -30,6 +31,13 @@ slots:
     read:
       - $SNAP/usr
 
+environment:
+    JAVA_HOME:        "$SNAP/usr/lib/jvm/default-java"
+    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
+    LD_LIBRARY_PATH:  "$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
+    SSH_ENV:          "${SNAP_USER_COMMON}/ssh-environment"
+    SNAP_SHM_SUB_DIR: "snap.${SNAP_NAME}."
+
 passthrough:
     layout:
         /usr/lib/git-core:
@@ -38,8 +46,8 @@ passthrough:
             bind: $SNAP/usr/share/git-core
 
 apps:
-    opengrok:
-        command: bin/opengrok-control OpenGrok
+    config-merge:
+        command: bin/command.opengrok-config-merge
         adapter: none
         plugs:
             - network-bind
@@ -47,12 +55,11 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
-        environment:
-            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
-            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+            - process-control
+            - system-observe
 
-    messages:
-        command: bin/opengrok-control Messages
+    deploy:
+        command: bin/command.opengrok-deploy
         adapter: none
         plugs:
             - network-bind
@@ -60,12 +67,11 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
-        environment:
-            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
-            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+            - process-control
+            - system-observe
 
     groups:
-        command: bin/opengrok-control Groups
+        command: bin/command.opengrok-groups
         adapter: none
         plugs:
             - network-bind
@@ -73,9 +79,79 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
-        environment:
-            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
-            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+            - process-control
+            - system-observe
+
+    indexer:
+        command: bin/command.opengrok-indexer
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
+    java:
+        command: bin/command.opengrok-java
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
+    mirror:
+        command: bin/command.opengrok-mirror
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
+    projadm:
+        command: bin/command.opengrok-projadm
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
+    reindex-project:
+        command: bin/command.opengrok-reindex-project
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
+    sync:
+        command: bin/command.opengrok-sync
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
 
     tomcat:
         command: bin/tomcat-control
@@ -83,13 +159,15 @@ apps:
         plugs:
             - network-bind
             - removable-media
+            - mount-observe
         environment:
             # installation pathes are based of CATALINA_HOME
             CATALINA_HOME: $SNAP
             # writable pathes are based of CATALINA_BASE
-            CATALINA_BASE: $SNAP_COMMON
-            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
-            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
+            CATALINA_BASE:   $SNAP_COMMON
+            CATALINA_PID:    ${SNAP_DATA}/tomcat.pid
+            CATALINA_TMPDIR: /tmp
+
     help:
         command: bin/help
         adapter: none
@@ -108,7 +186,7 @@ apps:
             - mount-observe
 
     update-index-daemon:
-        command: bin/opengrok-control OpenGrok index
+        command: bin/command.opengrok-indexer
         daemon: simple
         passthrough:
             timer: 04:30~05:00
@@ -119,9 +197,6 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
-        environment:
-            JAVA_HOME: $SNAP/usr/lib/jvm/default-java
-            PATH: $SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$PATH
 
     update-source:
         command: bin/update-src
@@ -138,34 +213,52 @@ parts:
         plugin: ant
         source: https://github.com/apache/tomcat85.git
         source-type: git
-        source-tag: TOMCAT_8_5_34
+        source-tag: TOMCAT_8_5_32
         override-build: |
             snapcraftctl build
             cp -r output/build/* $SNAPCRAFT_PART_INSTALL
+        stage:
+            - -usr/lib/jvm
 
     opengrok:
         plugin: maven
         source: https://github.com/OpenGrok/OpenGrok.git
         source-type: git
-        # source-tag: '1.1-rcxx'
-        source-branch: master
+        source-tag: '1.1'
+        # source-branch: master
+        maven-options:
+            - -DskipTests=true
+            - -Dmaven.javadoc.skip=false
+            - -B
+            - -V
+        maven-targets:
+            - plugins
         build-packages:
             - xmlstarlet
             - libxml2-utils
             - subversion
+            - python3-venv
+            - python3-pip
         override-build: |
-            mvn -DskipTests=true -Dmaven.javadoc.skip=false -B -V compile package
+            snapcraftctl build
+            echo "opengrok built successfully"
             snapcraftctl set-version $(git describe --tags)
-            mkdir -p ${SNAPCRAFT_PART_INSTALL}/var/opengrok/ ${SNAPCRAFT_PART_INSTALL}/src-updater
-            tar -xf distribution/target/opengrok-*.tar.gz -C $SNAPCRAFT_PART_INSTALL/var/opengrok --strip-components=1
-            sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = $SNAP_COMMON/logs/#g' \
-                $SNAPCRAFT_PART_INSTALL/var/opengrok/doc/logging.properties
+            mkdir -p ${SNAPCRAFT_PART_INSTALL}/dist ${SNAPCRAFT_PART_INSTALL}/src-updater
+            tar -xf distribution/target/opengrok-*.tar.gz -C ${SNAPCRAFT_PART_INSTALL}/dist/ --strip-components=1
+            sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = ${SNAP_COMMON}/logs/#g' \
+                ${SNAPCRAFT_PART_INSTALL}/dist/doc/logging.properties
+            # mkdir -p ${SNAPCRAFT_PART_INSTALL}/opengrok-tools
+            # PYTHONUSERBASE=${SNAPCRAFT_PART_INSTALL}/opengrok-tools python3 -m pip install --no-cache-dir ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
+            cd ${SNAPCRAFT_PART_INSTALL}
+            python3 -m venv opengrok-tools
+            cd opengrok-tools
+            bin/python3 -m pip install --no-cache-dir ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
+            ln -sf ../../usr/bin/python3 bin/python3
 
     # source control tools
     tools:
         plugin: nil
         stage-packages:
-            - exuberant-ctags
             - bzr
             - cvs
             - git
@@ -178,6 +271,8 @@ parts:
             - subversion
             - coreutils
             - curl
+            - procps
+            - python3
         organize:
             usr/share/bash-completion/completions/git: git-completion.bash
 
@@ -185,3 +280,23 @@ parts:
     glue:
         source: glue
         plugin: dump
+
+    universal-ctags:
+        plugin: autotools
+        build-packages:
+            - pkg-config
+        source: https://github.com/universal-ctags/ctags.git
+
+    libc-shm-shim:
+        plugin: nil
+        override-build: |
+            # beta channel has binary for core18, edge for core16
+            [ -z "$(dpkg -l | grep "libc-bin" | awk '{print $3}' | grep 2.27)" ] && channel="edge" || channel="beta"
+            snap download libc-shm-shim --${channel}
+            unsquashfs -f -d ${SNAPCRAFT_PART_INSTALL} libc-shm-shim_*.snap
+        build-packages:
+            - squashfs-tools
+        stage:
+            - -meta
+            - -snap
+

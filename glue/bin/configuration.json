@@ -1,0 +1,48 @@
+{
+	"opengrok": {
+		"http-port": {
+			"description": "http port OpenGrok's tomcat webserver is exposed on, atter change restart service",
+			"env": "HTTP_PORT",
+			"default": "8080"
+		},
+		"https-port": {
+			"description": "https port OpenGrok's tomcat webserver is exposed on, atter change restart service",
+			"env": "HTTPS_PORT",
+			"default": "8443"
+		},
+		"src-root": {
+			"description": "Source directory OpenGrok will index",
+			"env": "OPENGROK_SRC_ROOT",
+			"default": "${SNAP_COMMON}/src"
+		},
+		"src-data": {
+			"description": "Data directory OpenGrok will index",
+			"env": "OPENGROK_DATA_ROOT",
+			"default": "${SNAP_COMMON}/data"
+		}
+	},
+	"java": {
+		"min-mem": {
+			"description": "Minimum memory for the JVM",
+			"env": "JAVA_MIN_MEM",
+			"default": "128M"
+		},
+		"max-mem": {
+			"description": "Maximum memory for the JVM",
+			"env": "JAVA_MAX_MEM",
+			"default": "512M"
+		},
+		"extra-opt": {
+			"description": "Additional JVM options",
+			"env": "EXTRA_JAVA_OPTS",
+			"default": ""
+		}
+	},
+	"source": {
+		"debug": {
+			"description": "Enable debug mode",
+			"env": "",
+			"default": ""
+		}
+	}
+}

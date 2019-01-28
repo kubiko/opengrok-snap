@@ -6,7 +6,6 @@ fi
 
 # setup environment first
 source ${SNAP}/bin/read-settings
-echo ${OPENGROK_INSTANCE_BASE}
 echo "checking if we have 'update-source' script provided by other snap to use"
 if [ -f "$SNAP/src-updater/update-source" ]; then
     echo "Sourcing '$SNAP/src-updater/update-source'"
