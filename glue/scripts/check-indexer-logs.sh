@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/bin/bash
 #
 # Check OpenGrok indexer logs in the last 24 hours for any signs of serious
 # trouble.

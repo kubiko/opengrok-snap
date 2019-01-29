@@ -66,5 +66,5 @@ find /tmp -type f | \
   xargs sed -i -e 's#${SNAP}#'"${SNAP}"'#g' \
                -e 's#${SNAP_COMMON}#'"${SNAP_COMMON}"'#g' \
                -e 's#${SNAP_DATA}#'"${SNAP_DATA}"'#g' \
-               -e '#${HTTP_PORT}#'"${HTTP_PORT}"'#g' \
-               -e '#${WEBAPP_NAME}#'"${WEBAPP_NAME}"'#g'
+               -e 's#${HTTP_PORT}#'"${HTTP_PORT}"'#g' \
+               -e 's#${WEBAPP_NAME}#'"${WEBAPP_NAME}"'#g'

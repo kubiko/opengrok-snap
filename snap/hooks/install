@@ -22,6 +22,14 @@ if ! [ -f ${SNAP_COMMON}/logging.properties ]; then
     cp ${SNAP}/dist/doc/logging.properties ${SNAP_COMMON}/
 fi
 
+if ! [ -f ${SNAP_COMMON}/logging.properties.template ]; then
+    cp ${SNAP}/dist/doc/logging.properties.template ${SNAP_COMMON}/
+fi
+
+if ! [ -f ${SNAP_COMMON}/etc/mirror-config.yml ]; then
+    cp ${SNAP}/etc/mirror-config.yml ${SNAP_COMMON}/etc/
+fi
+
 if ! [ -d ${SNAP_COMMON}/scripts ]; then
     cp -r ${SNAP}/scripts ${SNAP_COMMON}
 fi

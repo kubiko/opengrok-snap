@@ -1,18 +1,14 @@
 #!/bin/bash
 
-if [ "$($SNAP/usr/bin/whoami)" != "root" ]; then
+if [ "$(${SNAP}/usr/bin/whoami)" != "root" ]; then
     echo "Please run as root!!"
     exit 0
 fi
 
-source $SNAP/bin/read-settings
+source ${SNAP}/bin/read-settings
 source ${SNAP}/opengrok-tools/bin/activate
-
-pushd $SNAP_COMMON 2&> /dev/null
 
 exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-deploy \
       -c ${SNAP_COMMON}/etc/configuration.xml \
       ${SNAP}/dist/lib/source.war \
       ${SNAP_COMMON}/webapps/${WEBAPP_NAME}.war "$@"
-
-popd 2&> /dev/null

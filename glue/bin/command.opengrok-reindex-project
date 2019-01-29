@@ -1,18 +1,12 @@
 #!/bin/bash
 
-if [ "$($SNAP/usr/bin/whoami)" != "root" ]; then
+if [ "$(${SNAP}/usr/bin/whoami)" != "root" ]; then
     echo "Please run as root!!"
     exit 0
 fi
 
-source $SNAP/bin/read-settings
+source ${SNAP}/bin/read-settings
 source ${SNAP}/opengrok-tools/bin/activate
 
-pushd $SNAP_COMMON 2&> /dev/null
-echo "OG_PROJECT=$OG_PROJECT"
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-reindex-project -l DEBUG\
-      -J=-d64 '-J=-XX:-UseGCOverheadLimit' -J=-Xmx16g -J=-server --jar  ${SNAP}/dist/lib/opengrok.jar \
-      -t ${SNAP}/dist/doc/logging.properties.template -p '%PROJ%' -P ${OG_PROJECT} -d ${SNAP_COMMON}/logs/${OG_PROJECT} \
-      -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} -- --renamedHistory on -r dirbased -G -m 256  -c ${SNAP}/bin/ctags \
-      -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} -H ${OG_PROJECT} "$@"
-popd 2&> /dev/null
+exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-reindex-project "$@"
+

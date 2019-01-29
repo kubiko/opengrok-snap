@@ -1,0 +1,19 @@
+#
+# Commands (or paths - for specific repository types only)
+#
+commands:
+  hg: ${SNAP}/usr/bin/hg
+  svn: ${SNAP}/usr/bin/svn
+
+hookdir: /tmp/hooks
+# per-project hooks relative to 'hookdir' above
+
+logdir: /tmp/logs
+
+command_timeout: 300
+hook_timeout: 1200
+
+#
+# Per project configuration.
+#
+projects:

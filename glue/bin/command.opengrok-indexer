@@ -1,14 +1,12 @@
 #!/bin/bash
 
-if [ "$($SNAP/usr/bin/whoami)" != "root" ]; then
+if [ "$(${SNAP}/usr/bin/whoami)" != "root" ]; then
     echo "Please run as root!!"
     exit 0
 fi
 
-source $SNAP/bin/read-settings
+source ${SNAP}/bin/read-settings
 source ${SNAP}/opengrok-tools/bin/activate
-
-pushd $SNAP_COMMON 2&> /dev/null
 
 exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-indexer -J=-Djava.util.logging.config.file=/tmp/logging.properties \
    -a ${SNAP}/dist/lib/opengrok.jar -- \
@@ -16,4 +14,3 @@ exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-inde
    -s ${OPENGROK_SRC_ROOT} -d ${OPENGROK_DATA_ROOT} -H -P -S -G \
    -W ${SNAP_COMMON}/etc/configuration.xml -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} "$@"
 
-popd 2&> /dev/null
