@@ -18,6 +18,12 @@ processing_top_key_end() {
     echo -e "\n"
 }
 
+handle_key_value() {
+    key=$1
+    shift
+    echo -e "${TAB}\t${key}\t$@"
+}
+
 # callback function to process one configuration
 # apply_config ${key} ${ENV} ${VALUE} ${DEFAULT} "${DESCRIPTION}"
 apply_config() {
@@ -33,5 +39,11 @@ apply_config() {
 source ${SNAP}/bin/snap-config
 read_snap_config
 
-echo -e "\n${SNAP_NAME} restarts when configuration is changed to apply changes"
+# show source configuration
+echo -e "\tSource configuration:"
+while read line
+do
+    process_line $line
+done < <(snapctl get -d source | jq -r 'keys[] as $k | "\($k) \(.[$k] )"')
 
+echo -e "${SNAP_NAME} restarts when configuration is changed to apply changes!!\n"

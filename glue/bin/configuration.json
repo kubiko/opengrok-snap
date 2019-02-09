@@ -19,9 +19,31 @@
 			"description": "Data directory OpenGrok will index",
 			"env": "OPENGROK_DATA_ROOT",
 			"default": "${SNAP_COMMON}/data"
-		}
+		},
+                "webapp-name": {
+                         "description": "web app name at which indexer is exposed",
+                         "env": "WEBAPP_NAME",
+                         "default": "source"
+                 }
 	},
-	"java": {
+        "tomcat": {
+                "shutdown-port": {
+                         "description": "tompcat shutdown port",
+                         "env": "TOMCAT_SHUTDOWN_PORT",
+                         "default": "8005"
+                },
+                "catalina-opts": {
+                         "description": "(Optional) Java runtime options used when the 'start' 'run' or 'debug' command is executed.",
+                         "env": "CATALINA_OPTS",
+                         "default": ""
+                },
+                "jpda-opts": {
+                         "description": "(Optional) Java runtime options used when the 'jpda start'",
+                         "env": "JPDA_OPTS",
+                         "default": ""
+                }
+        },
+        "java": {
 		"min-mem": {
 			"description": "Minimum memory for the JVM",
 			"env": "JAVA_MIN_MEM",
@@ -35,13 +57,6 @@
 		"extra-opt": {
 			"description": "Additional JVM options",
 			"env": "EXTRA_JAVA_OPTS",
-			"default": ""
-		}
-	},
-	"source": {
-		"debug": {
-			"description": "Enable debug mode",
-			"env": "",
 			"default": ""
 		}
 	}

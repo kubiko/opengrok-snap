@@ -7,6 +7,11 @@ process_line() {
   # each line starts with key name and end variable
   local key=$1
   shift
+  # check if we have valid json in first place
+  if ! jq -e . >/dev/null 2>&1 <<<"$@"; then
+    type -p handle_key_value && handle_key_value ${key} $@
+    return
+  fi
   ENV=$(echo $@ | jq -r '.env')
   # if we have env, no need to traverse further
   if [ "${ENV}" == "null" ]; then

@@ -46,6 +46,18 @@ passthrough:
             bind: $SNAP/usr/share/git-core
 
 apps:
+    opengrok:
+        command: bin/command.opengrok
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
     config-merge:
         command: bin/command.opengrok-config-merge
         adapter: none
@@ -153,6 +165,10 @@ apps:
             - process-control
             - system-observe
 
+    help:
+       command: bin/snap-help
+       adapter: none
+
     tomcat:
         command: bin/tomcat-control
         daemon: simple
@@ -168,28 +184,11 @@ apps:
             CATALINA_PID:    ${SNAP_DATA}/tomcat.pid
             CATALINA_TMPDIR: /tmp
 
-    help:
-        command: bin/help
-        adapter: none
-
-    update-source-daemon:
-        command: bin/update-src
+    index-sync-daemon:
+        command: bin/command.opengrok-sync
         daemon: simple
         passthrough:
             timer: 00:30~01:00
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-
-    update-index-daemon:
-        command: bin/command.opengrok-indexer
-        daemon: simple
-        passthrough:
-            timer: 04:30~05:00
         adapter: none
         plugs:
             - network-bind
@@ -280,6 +279,8 @@ parts:
     glue:
         source: glue
         plugin: dump
+        stage-packages:
+            - jq
 
     universal-ctags:
         plugin: autotools

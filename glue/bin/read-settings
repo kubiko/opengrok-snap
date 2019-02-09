@@ -41,23 +41,18 @@ if [ -d "${SSH_DIR}" ]; then
 fi
 
 
-# read settings
-source ${SNAP}/bin/config
-for key in ${keys[@]}
-do
-    default_value="DEFAULT_$key"
-    description="DESCRIPTION_$key"
-    snappy_key="KEY_$key"
-    value=$(snapctl get ${!snappy_key})
-    if [ "x$value" == "x" ]; then
-        echo -e "$key=${!default_value} (default value)"
-        export $key=${!default_value}
-    else
-        echo -e "$key=$value"
-        export $key=$value
-    fi
-done
+# callback function to process one configuration
+# apply_config ${key} ${ENV} ${VALUE} ${DEFAULT} ${DESCRIPTION}
+apply_config() {
+    local VAL=${3}
+    [ -z "${VAL}" ] && VAL=${4}
+    echo "${2}=${VAL}"
+    eval export ${2}=\"${VAL}\"
+}
 
+# read settings
+source ${SNAP}/bin/snap-config
+read_snap_config
 
 # before runing any task, copy configurations to temp locaton where SNAP, SNAP_DATA, SNAP_COMMON can be updated
 cp -r ${SNAP_COMMON}/logging.properties /tmp
