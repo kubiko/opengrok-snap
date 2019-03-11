@@ -210,9 +210,9 @@ apps:
 parts:
     tomcat:
         plugin: ant
-        source: https://github.com/apache/tomcat85.git
+        source: https://github.com/apache/tomcat.git
         source-type: git
-        source-tag: TOMCAT_8_5_32
+        source-tag: 8.5.38
         override-build: |
             snapcraftctl build
             cp -r output/build/* $SNAPCRAFT_PART_INSTALL
