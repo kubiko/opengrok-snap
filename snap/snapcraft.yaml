@@ -224,8 +224,7 @@ parts:
         plugin: maven
         source: https://github.com/OpenGrok/OpenGrok.git
         source-type: git
-        source-tag: '1.1.2'
-        # source-branch: master
+        source-branch: master
         maven-openjdk-version: "11"
         maven-options:
             - -DskipTests=true
@@ -240,6 +239,9 @@ parts:
             - subversion
             - python3-venv
             - python3-pip
+        override-pull: |
+            snapcraftctl pull
+            git checkout $(git describe --abbrev=0 --tags)
         override-build: |
             snapcraftctl build
             echo "opengrok built successfully"
