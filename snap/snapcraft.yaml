@@ -8,7 +8,7 @@ description: |
 confinement: strict
 grade: stable
 adopt-info: opengrok
-# base: core18
+base: core18
 
 plugs:
   source-location:
@@ -213,6 +213,7 @@ parts:
         source: https://github.com/apache/tomcat.git
         source-type: git
         source-tag: 8.5.38
+        ant-openjdk-version: "11"
         override-build: |
             snapcraftctl build
             cp -r output/build/* $SNAPCRAFT_PART_INSTALL
@@ -225,6 +226,7 @@ parts:
         source-type: git
         source-tag: '1.1.2'
         # source-branch: master
+        maven-openjdk-version: "11"
         maven-options:
             - -DskipTests=true
             - -Dmaven.javadoc.skip=false
