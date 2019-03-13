@@ -8,6 +8,9 @@ fi
 source ${SNAP}/bin/read-settings
 source ${SNAP}/opengrok-tools/bin/activate
 
+[ "${DEBUG}" = "1" ] && echo "Calling: exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-indexer -J=-Djava.util.logging.config.file=/tmp/logging.properties \
+-a ${SNAP}/dist/lib/opengrok.jar -- -c /${SNAP}/bin/ctags -s ${OPENGROK_SRC_ROOT} -d ${OPENGROK_DATA_ROOT} -H -P -S -G -W ${SNAP_COMMON}/etc/configuration.xml -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} $@"
+
 exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-indexer -J=-Djava.util.logging.config.file=/tmp/logging.properties \
    -a ${SNAP}/dist/lib/opengrok.jar -- \
    -c /${SNAP}/bin/ctags \
