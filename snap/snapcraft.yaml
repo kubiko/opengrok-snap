@@ -32,11 +32,11 @@ slots:
       - $SNAP/usr
 
 environment:
-    JAVA_HOME:        "$SNAP/usr/lib/jvm/default-java"
-    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/default-java/bin:$SNAP/usr/lib/jvm/default-java/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
+    JAVA_HOME:        "$SNAP/usr/lib/jvm/java-11-openjdk-amd64"
+    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-11-openjdk-amd64/bin:$SNAP/usr/lib/jvm/java-11-openjdk-amd64/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
     LD_LIBRARY_PATH:  "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
-    SSH_ENV:          "${SNAP_USER_COMMON}/ssh-environment"
-    SNAP_SHM_PREFIX:   "snap.${SNAP_INSTANCE_NAME}."
+    SNAP_SHM_PREFIX:  "snap.${SNAP_INSTANCE_NAME}."
+    SSH_AUTH_SOCK:    "${SNAP_DATA}/ssh-agent.socket"
 
 passthrough:
     layout:
@@ -206,6 +206,15 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
+
+    ssh-agent:
+        command: usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+        daemon: simple
+        adapter: none
+        plugs:
+            - home
+            - network-bind
+            - ssh-keys
 
 parts:
     tomcat:

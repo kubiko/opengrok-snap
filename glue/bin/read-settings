@@ -1,17 +1,8 @@
 #!/bin/bash
 
 
-# helper function to start own ssh-agent
-function start_agent {
-    ssh-agent | sed 's/^echo/#echo/' > "${SSH_ENV}"
-    echo "ssh-agent succeefully started"
-    chmod 600 ${SSH_ENV}
-    . ${SSH_ENV} > /dev/null
-    if [ -e "${SSH_DIR}/id_rsa" ]; then
-        ssh-add;
-    else
-        echo "There is no identity under ${SSH_DIR} to be added, you might want to add it"
-    fi
+add_ssh_key() {
+    ssh-add -l | grep -q `ssh-keygen -lf ${1} | awk '{print $2}'` || ssh-add ${1}
 }
 
 # check what is real home for current user
@@ -23,36 +14,37 @@ if [ -f "/var/lib/extrausers/passwd" ] && [ "$(du /var/lib/extrausers/passwd | c
     SSH_DIR=$(grep ${USER} /var/lib/extrausers/passwd | awk -F ":" '{ print $6}')/.ssh
 fi
 
-
-if [ -d "${SSH_DIR}" ]; then
-    # Source SSH settings, if applicable
-    if [ -f "${SSH_ENV}" ]; then
-        unset SSH_AGENT_PID
-        unset SSH_AUTH_SOCK
-        . ${SSH_ENV} > /dev/null
-        if [ -z "${SSH_AGENT_PID}" ] || [ "x$(ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent)" = "x" ]; then
-           start_agent;
-        fi
-    else
-        start_agent
-    fi
-# else
-#    echo "There no ${SSH_DIR} no need for ssh-agent"
-fi
-
+[ "${DEBUG}" = "1" ] && echo "SSH_DIR=${SSH_DIR}"
 
 # callback function to process one configuration
 # apply_config ${key} ${ENV} ${VALUE} ${DEFAULT} ${DESCRIPTION}
 apply_config() {
     local VAL=${3}
     [ -z "${VAL}" ] && VAL=${4}
-    echo "${2}=${VAL}"
+    if [ "${DEBUG}" = "1" ]; then
+        echo "${2}=${VAL}"
+    fi
     eval export ${2}=\"${VAL}\"
 }
 
 # read settings
 source ${SNAP}/bin/snap-config
 read_snap_config
+
+[ "${DEBUG}" = "1" ] && echo "making sure keys are loaded"
+for k in $(echo ${SSH_KEY_NAMES} | tr "," "\n")
+do
+    [ "${DEBUG}" = "1" ] && echo "Processing key '${k}'"
+    # check if key is full path or filename
+    if [ -f ${k} ]; then
+        add_ssh_key ${k}
+    elif [ -d "${SSH_DIR}" ] && [ -f ${SSH_DIR}/${k} ]; then
+        add_ssh_key ${SSH_DIR}/${k}
+    else
+        [ "${DEBUG}" = "1" ] && echo "Key '${k}' is neither valid full path or key under '${SSH_DIR}', ignoring it"
+    fi
+done
+
 
 # before runing any task, copy configurations to temp locaton where SNAP, SNAP_DATA, SNAP_COMMON can be updated
 cp -r ${SNAP_COMMON}/logging.properties /tmp

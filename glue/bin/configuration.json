@@ -24,7 +24,12 @@
                          "description": "web app name at which indexer is exposed",
                          "env": "WEBAPP_NAME",
                          "default": "source"
-                 }
+                },
+                "ssh-key-name": {
+                         "description": "name of ssh-key(s) to load, comma separated file names or full file paths",
+                         "env": "SSH_KEY_NAMES",
+                         "default": "id_rsa"
+                }
 	},
         "tomcat": {
                 "shutdown-port": {
