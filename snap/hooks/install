@@ -36,6 +36,8 @@ else
     # temp fix for previous release with bug
     chmod +x ${SNAP_COMMON}/scripts/check-indexer-logs.sh
     [ -n "$(grep OG_PROJECT ${SNAP_COMMON}/scripts/sync.conf)" ] && cp ${SNAP}/scripts/sync.conf  ${SNAP_COMMON}/scripts/
+    # fix for java 11 not supporting -d64 option anymore
+    [ -n "$(grep '\-J=\-d64' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/-J=-d64,//g' ${SNAP_COMMON}/scripts/sync.conf
 fi
 
 mkdir -p ${SNAP_COMMON}/src

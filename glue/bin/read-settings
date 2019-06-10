@@ -2,6 +2,7 @@
 
 
 add_ssh_key() {
+    [ "${DEBUG}" = "1" ] && echo -e "add_ssh_key ${1}"
     ssh-add -l | grep -q `ssh-keygen -lf ${1} | awk '{print $2}'` || ssh-add ${1}
 }
 
@@ -21,9 +22,7 @@ fi
 apply_config() {
     local VAL=${3}
     [ -z "${VAL}" ] && VAL=${4}
-    if [ "${DEBUG}" = "1" ]; then
-        echo "${2}=${VAL}"
-    fi
+    [ "${DEBUG}" = "1" ] && echo "${2}=${VAL}"
     eval export ${2}=\"${VAL}\"
 }
 
