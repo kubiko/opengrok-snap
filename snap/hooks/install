@@ -38,6 +38,8 @@ else
     [ -n "$(grep OG_PROJECT ${SNAP_COMMON}/scripts/sync.conf)" ] && cp ${SNAP}/scripts/sync.conf  ${SNAP_COMMON}/scripts/
     # fix for java 11 not supporting -d64 option anymore
     [ -n "$(grep '\-J=\-d64' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/-J=-d64,//g' ${SNAP_COMMON}/scripts/sync.conf
+    # fix for "cleanup is not a list of commands"
+    [ -n "$(grep '  command' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/  command:/  - command:/g' ${SNAP_COMMON}/scripts/sync.conf
 fi
 
 mkdir -p ${SNAP_COMMON}/src
