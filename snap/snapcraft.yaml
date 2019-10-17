@@ -38,12 +38,11 @@ environment:
     SNAP_SHM_PREFIX:  "snap.${SNAP_INSTANCE_NAME}."
     SSH_AUTH_SOCK:    "${SNAP_DATA}/ssh-agent.socket"
 
-passthrough:
-    layout:
-        /usr/lib/git-core:
-            bind: $SNAP/usr/lib/git-core
-        /usr/share/git-core:
-            bind: $SNAP/usr/share/git-core
+layout:
+    /usr/lib/git-core:
+        bind: $SNAP/usr/lib/git-core
+    /usr/share/git-core:
+        bind: $SNAP/usr/share/git-core
 
 apps:
     opengrok:
@@ -187,8 +186,7 @@ apps:
     index-sync-daemon:
         command: bin/command.opengrok-sync
         daemon: simple
-        passthrough:
-            timer: 00:30~01:00
+        timer: 00:30~01:00
         adapter: none
         plugs:
             - network-bind
@@ -266,6 +264,10 @@ parts:
             cd opengrok-tools
             bin/python3 -m pip install --no-cache-dir ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
             ln -sf ../../usr/bin/python3 bin/python3
+            sed -i 's|VIRTUAL_ENV=\".*|VIRTUAL_ENV=\"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate
+            sed -i 's|setenv VIRTUAL_ENV \".*|setenv VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.csh
+            sed -i 's|set -gx VIRTUAL_ENV \".*|set -gx VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.fish
+            find ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin -type f -exec sed -i 's|#!.*/parts/opengrok/install/opengrok-tools/bin/python3|#!/snap/'"${SNAPCRAFT_PROJECT_NAME}"'/current/opengrok-tools/bin/python3|g' {} \;
 
     # source control tools
     tools:
@@ -300,6 +302,8 @@ parts:
         plugin: autotools
         build-packages:
             - pkg-config
+        stage-packages:
+            - libjansson4
         source: https://github.com/universal-ctags/ctags.git
 
     libc-shm-shim:
