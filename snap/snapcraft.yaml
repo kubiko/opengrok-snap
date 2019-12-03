@@ -287,6 +287,9 @@ parts:
             - curl
             - procps
             - python3
+            - xz-utils
+            - pxz
+            - wget
         organize:
             usr/share/bash-completion/completions/git: git-completion.bash
             usr/bin/bzr.bzr: /usr/bin/bzr
