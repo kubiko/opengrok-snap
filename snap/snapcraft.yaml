@@ -290,6 +290,10 @@ parts:
             - xz-utils
             - pxz
             - wget
+            - libqtcore4
+            - libgnome-keyring0
+            - libkdecore5
+            - libkdeui5
         organize:
             usr/share/bash-completion/completions/git: git-completion.bash
             usr/bin/bzr.bzr: /usr/bin/bzr
@@ -307,6 +311,8 @@ parts:
             - pkg-config
         stage-packages:
             - libjansson4
+            - libicu60
+            - libxml2
         source: https://github.com/universal-ctags/ctags.git
 
     libc-shm-shim:
