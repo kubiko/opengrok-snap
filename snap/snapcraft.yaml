@@ -32,8 +32,8 @@ slots:
       - $SNAP/usr
 
 environment:
-    JAVA_HOME:        "$SNAP/usr/lib/jvm/java-11-openjdk-amd64"
-    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-11-openjdk-amd64/bin:$SNAP/usr/lib/jvm/java-11-openjdk-amd64/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
+    JAVA_HOME:        "$SNAP/usr/lib/jvm/java-8-openjdk-amd64"
+    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-8-openjdk-amd64/bin:$SNAP/usr/lib/jvm/java-8-openjdk-amd64/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
     LD_LIBRARY_PATH:  "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     SNAP_SHM_PREFIX:  "snap.${SNAP_INSTANCE_NAME}."
     SSH_AUTH_SOCK:    "${SNAP_DATA}/ssh-agent.socket"
@@ -219,8 +219,11 @@ parts:
         plugin: ant
         source: https://github.com/apache/tomcat.git
         source-type: git
-        source-tag: 8.5.38
-        ant-openjdk-version: "11"
+        source-tag: 8.5.49
+        ant-openjdk-version: "8"
+        override-pull: |
+            snapcraftctl pull
+            git checkout $(git tag -l | grep 8.5. | sort --version-sort | tail -1)
         override-build: |
             snapcraftctl build
             cp -r output/build/* $SNAPCRAFT_PART_INSTALL
@@ -232,7 +235,7 @@ parts:
         source: https://github.com/OpenGrok/OpenGrok.git
         source-type: git
         source-branch: master
-        maven-openjdk-version: "11"
+        maven-openjdk-version: "8"
         maven-options:
             - -DskipTests=true
             - -Dmaven.javadoc.skip=false
