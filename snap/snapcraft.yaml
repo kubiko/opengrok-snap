@@ -257,11 +257,20 @@ parts:
             - python3-pip
         override-pull: |
             snapcraftctl pull
-            git checkout $(git describe --abbrev=0 --tags)
+            # decide if to build master or release(tag)
+            last_released_tag="$(snap info opengrok | awk '$1 == "latest/beta:" { print $2 }')"
+            last_commited_tag=$(git describe --abbrev=0 --tags)
+            # If the latest tag from the upstream project has not been released to
+            # beta, build that tag instead of master.
+            if [ "${last_commited_tag}" != "${last_released_tag}" ]; then
+                git checkout ${last_commited_tag}
+                snapcraftctl set-version ${last_commited_tag}
+            else
+                snapcraftctl set-version $(git describe --tags)
+            fi
         override-build: |
             snapcraftctl build
             echo "opengrok built successfully"
-            snapcraftctl set-version $(git describe --tags)
             mkdir -p ${SNAPCRAFT_PART_INSTALL}/dist ${SNAPCRAFT_PART_INSTALL}/src-updater
             tar -xf distribution/target/opengrok-*.tar.gz -C ${SNAPCRAFT_PART_INSTALL}/dist/ --strip-components=1
             sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = ${SNAP_COMMON}/logs/#g' \
