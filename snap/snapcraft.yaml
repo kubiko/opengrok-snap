@@ -2,7 +2,7 @@ name: opengrok
 summary: OpenGrok is a fast and usable source code search and cross reference engine
 description: |
  OpenGrok is a fast and usable source code search and cross reference engine, written in Java.
- It helps you search, cross-reference and navigate your source tree. It can understand various 
+ It helps you search, cross-reference and navigate your source tree. It can understand various
  program file formats and version control histories of many source code management systems.
 
 confinement: strict
@@ -225,11 +225,11 @@ parts:
         plugin: ant
         source: https://github.com/apache/tomcat.git
         source-type: git
-        source-tag: 8.5.49
+        source-branch: 9.0.x
         ant-openjdk-version: "8"
         override-pull: |
             snapcraftctl pull
-            git checkout $(git tag -l | grep 8.5. | sort --version-sort | tail -1)
+            git checkout $(git tag -l | grep 9.0. | sort --version-sort | tail -1)
         override-build: |
             snapcraftctl build
             cp -r output/build/* $SNAPCRAFT_PART_INSTALL
@@ -345,4 +345,3 @@ parts:
         stage:
             - -meta
             - -snap
-
