@@ -228,7 +228,7 @@ parts:
         source: https://github.com/apache/tomcat.git
         source-type: git
         source-branch: 9.0.x
-        ant-openjdk-version: "8"
+        ant-openjdk-version: "11"
         override-pull: |
             snapcraftctl pull
             git checkout $(git tag -l | grep 9.0. | sort --version-sort | tail -1)
@@ -243,7 +243,7 @@ parts:
         source: https://github.com/OpenGrok/OpenGrok.git
         source-type: git
         source-branch: master
-        maven-openjdk-version: "8"
+        maven-openjdk-version: "11"
         maven-options:
             - -DskipTests=true
             - -Dmaven.javadoc.skip=false
