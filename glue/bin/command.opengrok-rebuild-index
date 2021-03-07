@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [ "$(${SNAP}/usr/bin/whoami)" != "root" ]; then
+    echo "Please run as root!!"
+    exit 0
+fi
+
+source ${SNAP}/bin/read-settings
+
+# First delete existing index
+echo "cleaning existing index..."
+rm -rf ${OPENGROK_DATA_ROOT}
+mkdir -p ${OPENGROK_DATA_ROOT}
+
+# build fresh index
+${SNAP}/bin/command.opengrok-indexer
+# deploy it
+${SNAP}/bin/command.opengrok-deploy
