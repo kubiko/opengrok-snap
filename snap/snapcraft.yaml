@@ -200,6 +200,8 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
+            - process-control
+            - system-observe
 
     update-source:
         command: bin/update-src
