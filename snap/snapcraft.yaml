@@ -203,6 +203,19 @@ apps:
             - process-control
             - system-observe
 
+    rebuild-index-helper:
+        command: bin/command.opengrok-rebuild-index
+        daemon: oneshot
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
     update-source:
         command: bin/update-src
         adapter: none
