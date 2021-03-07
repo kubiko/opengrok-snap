@@ -1,0 +1,50 @@
+#!/bin/bash
+
+mkdir -p "${SNAP_COMMON}/logs"
+mkdir -p "${SNAP_COMMON}/temp"
+mkdir -p "${SNAP_COMMON}/etc"
+
+if ! [ -d ${SNAP_COMMON}/conf ]; then
+    cp -rn ${SNAP}/conf ${SNAP_COMMON}/conf
+fi
+
+if ! [ -d ${SNAP_COMMON}/webapps ]; then
+    cp -rn ${SNAP}/webapps ${SNAP_COMMON}/
+    cp ${SNAP}/dist/lib/*.war ${SNAP_COMMON}/webapps/
+fi
+
+if ! [ -f ${SNAP_COMMON}/logging.properties ]; then
+    cp ${SNAP}/dist/doc/logging.properties ${SNAP_COMMON}/
+fi
+
+if ! [ -f ${SNAP_COMMON}/logging.properties.template ]; then
+    cp ${SNAP}/dist/doc/logging.properties.template ${SNAP_COMMON}/
+fi
+
+if ! [ -f ${SNAP_COMMON}/etc/mirror-config.yml ]; then
+    cp ${SNAP}/etc/mirror-config.yml ${SNAP_COMMON}/etc/
+fi
+
+if ! [ -d ${SNAP_COMMON}/scripts ]; then
+    cp -r ${SNAP}/scripts ${SNAP_COMMON}
+else
+    # temp fix for previous release with bug
+    chmod +x ${SNAP_COMMON}/scripts/check-indexer-logs.sh
+    [ -n "$(grep OG_PROJECT ${SNAP_COMMON}/scripts/sync.conf)" ] && cp ${SNAP}/scripts/sync.conf  ${SNAP_COMMON}/scripts/
+    # fix for java 11 not supporting -d64 option anymore
+    [ -n "$(grep '\-J=\-d64' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/-J=-d64,//g' ${SNAP_COMMON}/scripts/sync.conf
+    # fix for "cleanup is not a list of commands"
+    [ -n "$(grep '  command' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/  command:/  - command:/g' ${SNAP_COMMON}/scripts/sync.conf
+fi
+
+mkdir -p ${SNAP_COMMON}/src
+mkdir -p ${SNAP_COMMON}/data
+mkdir -p ${SNAP_COMMON}/logs
+
+# check if we have any source configuration and add example if there is none
+if [ -z "$(snapctl get source)" ]; then
+    snapctl set source='{"opengrok":{"url":"https://github.com/oracle/opengrok.git","type":"git","tag":"master","project":"opengrok"}}'
+fi
+
+# disable one reindex helper service
+snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
