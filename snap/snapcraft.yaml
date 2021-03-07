@@ -38,8 +38,8 @@ slots:
       - $SNAP/usr
 
 environment:
-    JAVA_HOME:        "$SNAP/usr/lib/jvm/java-8-openjdk-amd64"
-    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-8-openjdk-amd64/bin:$SNAP/usr/lib/jvm/java-8-openjdk-amd64/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
+    JAVA_HOME:        "$SNAP/usr/lib/jvm/java-openjdk"
+    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-openjdk/bin:$SNAP/usr/lib/jvm/java-openjdk/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
     LD_LIBRARY_PATH:  "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     SNAP_SHM_PREFIX:  "snap.${SNAP_INSTANCE_NAME}."
     SSH_AUTH_SOCK:    "${SNAP_DATA}/ssh-agent.socket"
@@ -301,6 +301,13 @@ parts:
             sed -i 's|setenv VIRTUAL_ENV \".*|setenv VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.csh
             sed -i 's|set -gx VIRTUAL_ENV \".*|set -gx VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.fish
             find ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin -type f -exec sed -i 's|#!.*/parts/opengrok/install/opengrok-tools/bin/python3|#!/snap/'"${SNAPCRAFT_PROJECT_NAME}"'/current/opengrok-tools/bin/python3|g' {} \;
+            # clean sym link, so we can use organize feature without worry for collision
+            find ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/ \
+                 -maxdepth 1 \
+                 -type l \
+                 -exec rm {} \;
+        organize:
+            'usr/lib/jvm/java-*-openjdk-*': usr/lib/jvm/java-openjdk
 
     # source control tools
     tools:
