@@ -357,13 +357,5 @@ parts:
 
     libc-shm-shim:
         plugin: nil
-        override-build: |
-            # beta channel has binary for core18, edge for core16
-            [ -z "$(dpkg -l | grep "libc-bin" | awk '{print $3}' | grep 2.27)" ] && channel="edge" || channel="beta"
-            snap download libc-shm-shim --${channel}
-            unsquashfs -f -d ${SNAPCRAFT_PART_INSTALL} libc-shm-shim_*.snap
-        build-packages:
-            - squashfs-tools
-        stage:
-            - -meta
-            - -snap
+        stage-snaps:
+            - libc-shm-shim/18/beta
