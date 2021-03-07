@@ -5,6 +5,9 @@ logger "$(date '+%Y-%m-%d %H:%M:%S'): Entering $(basename $0) hook"
 # run common part of the hook
 ${SNAP}/bin/snap-hooks-common
 
+# clean ssh-agent.socket
+[ -e ${SNAP_DATA}/ssh-agent.socket ] && rm ${SNAP_DATA}/ssh-agent.socket
+
 # upgrading OpenGrok often corrupts indexed history,
 # as precaution automatically rebuild index
 logger "rebuilding index..."
