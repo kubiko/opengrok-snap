@@ -8,4 +8,4 @@ ${SNAP}/bin/snap-hooks-common
 # upgrading OpenGrok often corrupts indexed history,
 # as precaution automatically rebuild index
 logger "rebuilding index..."
-snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper
+snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
