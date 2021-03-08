@@ -29,6 +29,11 @@
 			"description": "name of ssh-key(s) to load, comma separated file names or full file paths",
 			"env": "SSH_KEY_NAMES",
 			"default": "id_rsa"
+		},
+		"auto-rebuild-index": {
+			"description": "Automatically rebuild index when new version is installed. Permited values: ON/OFF",
+			"env": "AUTO_REBUILD_INDEX",
+			"default": "NO"
 		}
 	},
 	"tomcat": {
