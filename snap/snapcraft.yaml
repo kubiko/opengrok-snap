@@ -349,6 +349,9 @@ parts:
             - libicu60
             - libxml2
         source: https://github.com/universal-ctags/ctags.git
+        override-pull: |
+            snapcraftctl pull
+            git checkout $(git tag -l | sort --version-sort | tail -1)
 
     libc-shm-shim:
         plugin: nil
