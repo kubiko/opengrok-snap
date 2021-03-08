@@ -16,3 +16,6 @@ mkdir -p ${OPENGROK_DATA_ROOT}
 ${SNAP}/bin/command.opengrok-indexer
 # deploy it
 ${SNAP}/bin/command.opengrok-deploy
+
+# disable itself, so this servive is not auto started
+snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
