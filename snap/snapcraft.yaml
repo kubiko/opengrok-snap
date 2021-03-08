@@ -39,6 +39,7 @@ slots:
 
 environment:
     JAVA_HOME:        "$SNAP/usr/lib/jvm/java-openjdk"
+    CLASSPATH:        "$SNAP/lib:$SNAP/dist/lib:$SNAP/dist/share/lib:$SNAP/plugins"
     PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-openjdk/bin:$SNAP/usr/lib/jvm/java-openjdk/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
     LD_LIBRARY_PATH:  "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
     SNAP_SHM_PREFIX:  "snap.${SNAP_INSTANCE_NAME}."
