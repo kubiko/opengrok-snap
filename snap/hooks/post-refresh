@@ -9,6 +9,8 @@ ${SNAP}/bin/snap-hooks-common
 [ -e ${SNAP_DATA}/ssh-agent.socket ] && rm ${SNAP_DATA}/ssh-agent.socket
 
 # upgrading OpenGrok often corrupts indexed history,
-# as precaution automatically rebuild index
-logger "rebuilding index..."
-snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
+# as precaution automatically rebuild index is feature is enabled
+if [ "$(snapctl get opengrok.auto-rebuild-index)" = "ON" ]; then
+  logger "rebuilding index..."
+  snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
+fi
