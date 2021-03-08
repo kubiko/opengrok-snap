@@ -45,6 +45,3 @@ mkdir -p ${SNAP_COMMON}/logs
 if [ -z "$(snapctl get source)" ]; then
     snapctl set source='{"opengrok":{"url":"https://github.com/oracle/opengrok.git","type":"git","tag":"master","project":"opengrok"}}'
 fi
-
-# disable one reindex helper service
-snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper

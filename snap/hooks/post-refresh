@@ -12,10 +12,14 @@ ${SNAP}/bin/snap-hooks-common
 # upgrading OpenGrok often corrupts indexed history,
 # as precaution automatically rebuild index is feature is enabled
 # and opengrok version has changed
-if [ "$(snapctl get opengrok.auto-rebuild-index)" = "ON" ]; then
-  if [ "${SNAP_VERSION}" = "$(snapctl get last-opengrok-version=)" ];then
-    logger "rebuilding index..."
+auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
+previous_version="$(snapctl get last-opengrok-version=)"
+if [ "${auto_rebuild}" = "ON" ] && [ "${SNAP_VERSION}" = "${previous_version}" ]; then
+    logger "hook: ${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
     snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
-    snapctl unset last-opengrok-version
-  fi
+else
+    logger "hook: ${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
+    # disable reindex helper service
+    snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
 fi
+snapctl unset last-opengrok-version
