@@ -267,12 +267,6 @@ parts:
             - -V
         maven-targets:
             - plugins
-        build-packages:
-            - xmlstarlet
-            - libxml2-utils
-            - subversion
-            - python3-venv
-            - python3-pip
         override-pull: |
             snapcraftctl pull
             # decide if to build master or release(tag)
@@ -350,8 +344,6 @@ parts:
 
     universal-ctags:
         plugin: autotools
-        build-packages:
-            - pkg-config
         stage-packages:
             - libjansson4
             - libicu60
@@ -362,3 +354,10 @@ parts:
         plugin: nil
         stage-snaps:
             - libc-shm-shim/18/beta
+
+build-packages:
+    - libxml2-utils
+    - pkg-config
+    - python3-venv
+    - python3-pip
+    - xmlstarlet
