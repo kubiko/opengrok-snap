@@ -244,11 +244,11 @@ parts:
         plugin: ant
         source: https://github.com/apache/tomcat.git
         source-type: git
-        source-branch: 9.0.x
+        source-branch: master
         ant-openjdk-version: "11"
         override-pull: |
             snapcraftctl pull
-            git checkout $(git tag -l | grep 9.0. | sort --version-sort | tail -1)
+            git checkout $(git tag -l | grep 10.0. | sort --version-sort | tail -1)
         override-build: |
             snapcraftctl build
             cp -r output/build/* $SNAPCRAFT_PART_INSTALL
