@@ -205,7 +205,10 @@ apps:
 
     rebuild-index-helper:
         command: bin/command.opengrok-rebuild-index
-        daemon: oneshot
+        daemon: simple
+        after:
+            - tomcat
+            - ssh-agent
         adapter: none
         plugs:
             - network-bind
