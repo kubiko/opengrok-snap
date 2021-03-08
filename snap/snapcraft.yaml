@@ -332,6 +332,7 @@ parts:
             - libgnome-keyring0
             - libkdecore5
             - libkdeui5
+            - libtcnative-1
         organize:
             usr/share/bash-completion/completions/git: git-completion.bash
             usr/bin/bzr.bzr: /usr/bin/bzr
