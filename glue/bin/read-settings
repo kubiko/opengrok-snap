@@ -51,7 +51,7 @@ mkdir -p ${OPENGROK_DATA_ROOT}
 # before runing any task, copy configurations to temp locaton where SNAP, SNAP_DATA, SNAP_COMMON can be updated
 cp -r ${SNAP_COMMON}/logging.properties /tmp
 cp -r ${SNAP_COMMON}/scripts /tmp
-find /tmp -type f | \
+find /tmp -type f -name "*.sh" -o -name "*.conf" -o -name "*.properties" | \
   xargs sed -i -e 's#${SNAP}#'"${SNAP}"'#g' \
                -e 's#${SNAP_COMMON}#'"${SNAP_COMMON}"'#g' \
                -e 's#${SNAP_DATA}#'"${SNAP_DATA}"'#g' \
