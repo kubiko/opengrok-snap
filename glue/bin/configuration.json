@@ -20,35 +20,35 @@
 			"env": "OPENGROK_DATA_ROOT",
 			"default": "${SNAP_COMMON}/data"
 		},
-                "webapp-name": {
-                         "description": "web app name at which indexer is exposed",
-                         "env": "WEBAPP_NAME",
-                         "default": "source"
-                },
-                "ssh-key-name": {
-                         "description": "name of ssh-key(s) to load, comma separated file names or full file paths",
-                         "env": "SSH_KEY_NAMES",
-                         "default": "id_rsa"
-                }
+		"webapp-name": {
+			"description": "web app name at which indexer is exposed",
+			"env": "WEBAPP_NAME",
+			"default": "source"
+		},
+		"ssh-key-name": {
+			"description": "name of ssh-key(s) to load, comma separated file names or full file paths",
+			"env": "SSH_KEY_NAMES",
+			"default": "id_rsa"
+		}
 	},
-        "tomcat": {
-                "shutdown-port": {
-                         "description": "tompcat shutdown port",
-                         "env": "TOMCAT_SHUTDOWN_PORT",
-                         "default": "8005"
-                },
-                "catalina-opts": {
-                         "description": "(Optional) Java runtime options used when the 'start' 'run' or 'debug' command is executed.",
-                         "env": "CATALINA_OPTS",
-                         "default": ""
-                },
-                "jpda-opts": {
-                         "description": "(Optional) Java runtime options used when the 'jpda start'",
-                         "env": "JPDA_OPTS",
-                         "default": ""
-                }
-        },
-        "java": {
+	"tomcat": {
+		"shutdown-port": {
+			"description": "tompcat shutdown port",
+			"env": "TOMCAT_SHUTDOWN_PORT",
+			"default": "8005"
+		},
+		"catalina-opts": {
+			"description": "(Optional) Java runtime options used when the 'start' 'run' or 'debug' command is executed.",
+			"env": "CATALINA_OPTS",
+			"default": ""
+		},
+		"jpda-opts": {
+			"description": "(Optional) Java runtime options used when the 'jpda start'",
+			"env": "JPDA_OPTS",
+			"default": ""
+		}
+	},
+	"java": {
 		"min-mem": {
 			"description": "Minimum memory for the JVM",
 			"env": "JAVA_MIN_MEM",
