@@ -15,11 +15,12 @@ ${SNAP}/bin/snap-hooks-common
 auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
 previous_version="$(snapctl get last-opengrok-version)"
 if [ "${auto_rebuild}" = "ON" ] && [ "${SNAP_VERSION}" = "${previous_version}" ]; then
-    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
-    snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
-else
     logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
     # disable reindex helper service
     snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
+else
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
+    # start reindex helper service
+    snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
 fi
 snapctl unset last-opengrok-version
