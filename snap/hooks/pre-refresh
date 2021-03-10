@@ -1,5 +1,5 @@
 #!/bin/bash
 
-logger "hook: $(basename $0): hook start"
+logger "snap.${SNAP_INSTANCE_NAME}.hook.$(basename $0): entering the hook"
 
 snapctl set last-opengrok-version="${SNAP_VERSION}"

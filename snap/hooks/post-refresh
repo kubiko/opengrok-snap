@@ -1,7 +1,7 @@
 #!/bin/bash
 
 hook_name="$(basename $0)"
-logger "hook: ${hook_name}: hook start"
+logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: hook start"
 
 # run common part of the hook
 ${SNAP}/bin/snap-hooks-common
@@ -15,10 +15,10 @@ ${SNAP}/bin/snap-hooks-common
 auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
 previous_version="$(snapctl get last-opengrok-version)"
 if [ "${auto_rebuild}" = "ON" ] && [ "${SNAP_VERSION}" = "${previous_version}" ]; then
-    logger "hook: ${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
     snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
 else
-    logger "hook: ${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
     # disable reindex helper service
     snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
 fi
