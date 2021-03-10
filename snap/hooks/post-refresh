@@ -13,7 +13,7 @@ ${SNAP}/bin/snap-hooks-common
 # as precaution automatically rebuild index is feature is enabled
 # and opengrok version has changed
 auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
-previous_version="$(snapctl get last-opengrok-version=)"
+previous_version="$(snapctl get last-opengrok-version)"
 if [ "${auto_rebuild}" = "ON" ] && [ "${SNAP_VERSION}" = "${previous_version}" ]; then
     logger "hook: ${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
     snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
