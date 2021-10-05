@@ -359,8 +359,13 @@ parts:
 
     libc-shm-shim:
         plugin: nil
-        stage-snaps:
-            - libc-shm-shim/18/beta
+        override-pull: |
+            SNAPPY_STORE_NO_CDN=1 snap download libc-shm-shim --channel 18/beta
+        override-build: |
+            unsquashfs -f -d ${SNAPCRAFT_PART_INSTALL} libc-shm-shim*.snap
+        organize:
+            meta/: meta.libc-shm-shim/
+            snap/: snap.libc-shm-shim/
 
 build-packages:
     - libxml2-utils
