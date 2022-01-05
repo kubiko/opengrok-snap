@@ -236,8 +236,12 @@ apps:
        adapter: none
 
     tomcat:
-        command: bin/tomcat-control
+        command-chain:
+            - bin/read-settings
+        command: bin/tomcat-control run
+        stop-command: bin/tomcat-control stop -force
         daemon: simple
+        adapter: none
         plugs:
             - network-bind
             - removable-media
