@@ -422,29 +422,29 @@ parts:
         plugin: nil
         stage-packages:
             - bzr
+            - coreutils
+            - cssc
             - cvs
+            - curl
             - git
             - gitk
-            - openssh-client
-            - mercurial
-            - monotone
-            - rcs
-            - cssc
-            - subversion
-            - coreutils
-            - curl
-            - procps
-            - python3
-            - xz-utils
-            - pxz
-            - wget
-            - libqtcore4
+            - jq
             - libgnome-keyring0
             - libkdecore5
             - libkdeui5
-            - libtcnative-1
+            - libqtcore4
+            - monotone
+            - mercurial
+            - openssh-client
+            - procps
+            - pxz
+            - python3
             - python3-apt
             - python3-distutils
+            - rcs
+            - subversion
+            - wget
+            - xz-utils
         organize:
             usr/share/bash-completion/completions/git: git-completion.bash
             usr/bin/bzr.bzr: /usr/bin/bzr
@@ -453,8 +453,6 @@ parts:
     glue:
         source: glue
         plugin: dump
-        stage-packages:
-            - jq
 
     universal-ctags:
         plugin: autotools
