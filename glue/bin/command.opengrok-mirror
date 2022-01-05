@@ -1,4 +1,6 @@
 #!/bin/bash
 
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-mirror "$@"
-
+exec \
+    ${SNAP}/opengrok-tools/bin/python3 \
+    ${SNAP}/opengrok-tools/bin/opengrok-mirror \
+    "$@"

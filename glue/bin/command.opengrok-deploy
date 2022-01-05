@@ -1,6 +1,9 @@
 #!/bin/bash
 
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-deploy \
-      -c ${SNAP_COMMON}/etc/configuration.xml \
-      ${SNAP}/dist/lib/source.war \
-      ${SNAP_COMMON}/webapps/${WEBAPP_NAME}.war "$@"
+exec \
+    ${SNAP}/opengrok-tools/bin/python3 \
+    ${SNAP}/opengrok-tools/bin/opengrok-deploy \
+    -c ${SNAP_COMMON}/etc/configuration.xml \
+    ${SNAP}/dist/lib/source.war \
+    ${SNAP_COMMON}/webapps/${WEBAPP_NAME}.war \
+    "$@"

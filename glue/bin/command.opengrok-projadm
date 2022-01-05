@@ -1,4 +1,8 @@
 #!/bin/bash
 
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-projadm "$@"
-
+exec \
+    ${SNAP}/opengrok-tools/bin/python3 \
+    ${SNAP}/opengrok-tools/bin/opengrok-projadm \
+    -b ${SNAP_COMMON} \
+    -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} \
+    "$@"

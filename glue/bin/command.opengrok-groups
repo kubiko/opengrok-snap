@@ -1,4 +1,8 @@
 #!/bin/bash
 
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-groups "$@"
-
+exec \
+    ${SNAP}/opengrok-tools/bin/python3 \
+    ${SNAP}/opengrok-tools/bin/opengrok-groups \
+    -J=-Djava.util.logging.config.file=/tmp/logging.properties \
+    -J=-Duser.home=${SNAP_COMMON} \
+    "$@"

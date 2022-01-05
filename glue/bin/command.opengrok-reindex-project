@@ -1,6 +1,9 @@
 #!/bin/bash
 
-[ "${DEBUG}" = "1" ] && echo "Calling: ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-reindex-project $@"
-
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-reindex-project "$@"
-
+exec \
+    ${SNAP}/opengrok-tools/bin/python3 \
+    ${SNAP}/opengrok-tools/bin/opengrok-reindex-project \
+    -J=-Djava.util.logging.config.file=/tmp/logging.properties \
+    -J=-Duser.home=${SNAP_COMMON} \
+    -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} \
+    "$@"

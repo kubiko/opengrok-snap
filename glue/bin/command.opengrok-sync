@@ -1,6 +1,8 @@
 #!/bin/bash
 
-[ "${DEBUG}" = "1" ] && echo "Calling: ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-sync -c /tmp/scripts/sync.conf -d ${OPENGROK_SRC_ROOT} $@"
-
-exec ${SNAP}/opengrok-tools/bin/python3 ${SNAP}/opengrok-tools/bin/opengrok-sync -c /tmp/scripts/sync.conf -d ${OPENGROK_SRC_ROOT} "$@"
-
+exec \
+    ${SNAP}/opengrok-tools/bin/python3 \
+    ${SNAP}/opengrok-tools/bin/opengrok-sync \
+    -c /tmp/scripts/sync.conf \
+    -d ${OPENGROK_SRC_ROOT} \
+    "$@"
