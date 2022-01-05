@@ -112,6 +112,21 @@ apps:
             - process-control
             - system-observe
 
+    index-all:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
+        command: bin/command.opengrok-index-all
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
     indexer:
         command-chain:
             - bin/read-settings

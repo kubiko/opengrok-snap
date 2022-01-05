@@ -6,7 +6,7 @@ rm -rf ${OPENGROK_DATA_ROOT}
 mkdir -p ${OPENGROK_DATA_ROOT}
 
 # build fresh index
-${SNAP}/bin/command.opengrok-indexer
+${SNAP}/bin/command.opengrok-index-all
 # deploy it
 ${SNAP}/bin/command.opengrok-deploy
 
