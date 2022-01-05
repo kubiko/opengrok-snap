@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# read openhab config
-CONFIG=${SNAP}/bin/configuration.json
+# read OpenGrok config
+CONFIG=${SNAP}/etc/snap-configuration.json
 
 process_line() {
   # each line starts with key name and end variable
