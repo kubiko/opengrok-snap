@@ -1,0 +1,551 @@
+#!/bin/bash
+#
+# Copyright (c) 2019 Canonical
+#
+#  All rights reserved. This program and the accompanying materials
+#  are made available under the terms of the Eclipse Public License v1.0
+#  which accompanies this distribution, and is available at
+#  http://www.eclipse.org/legal/epl-v10.html
+#
+# Contributors:
+#   Ondrej Kubik
+#
+
+MAX_ACTIVE_TASKS=4
+DEFAULT_SERIES="focal"
+MAX_CURL_RETRY="6"
+declare ACTIVE_TASKS
+
+check_opengrok_config() {
+  GIT_USER="${1}"
+  GIT_USER_EMAIL="${2}"
+  git config --global user.name "${GIT_USER}"
+  git config --global user.email "${GIT_USER_EMAIL}"
+}
+
+pull_bzr_branch() {
+    BRANCH_DIRECTORY=$1
+    bzr pull --directory $BRANCH_DIRECTORY  > /dev/null
+}
+
+git_force_ubuntu_checkout() {
+    # possible branches ubuntu/${SERIES} ubuntu/${SERIES}-devel  ubuntu/${SERIES}-proposed ubuntu/${SERIES}-updates
+
+    # check if there is update branch and use that one instead
+    echo "git_force_ubuntu_checkout:<<< $PWD"
+    if [ -n "$(git branch -r | grep -w "ubuntu/${SERIES}-updates")" ]; then
+        # we have remote -update, try to use it, unless already on that branch
+        if [ -n "$(git branch | grep -w "ubuntu/${SERIES}-updates")" ]; then
+            # there is already local branch, if active just pull, if not delete and recreate
+            if [ -n "$(git branch | grep -w "ubuntu/${SERIES}-updates" | grep '*' )" ]; then
+                # already checkout, update upstream and pull
+                git branch --force --set-upstream-to=origin/ubuntu/${SERIES}-updates
+                git pull --force
+            else
+                # branch exist but not checkout, update upstream, checkout and pull
+                git branch --force --set-upstream-to=origin/ubuntu/${SERIES}-updates ubuntu/${SERIES}-updates
+                git checkout --force ubuntu/${SERIES}-updates
+                git pull --force
+            fi
+        else
+            # local branch does not exist yet, create it
+            git fetch
+            git branch --force ubuntu/${SERIES}-updates --track  origin/ubuntu/${SERIES}-updates
+            git checkout --force ubuntu/${SERIES}-updates
+        fi
+    else
+        # no -update branch, use series only
+        if [ -n "$(git branch | grep -w "ubuntu/${SERIES}")" ]; then
+            # we have local branch, is it checked out
+            if [ -n "$(git branch | grep -w "ubuntu/${SERIES}" | grep '*' )" ]; then
+                # already checkout, update upstream and pull
+                git branch --force --set-upstream-to=origin/ubuntu/${SERIES}
+                git pull --force
+            else
+                # branch exist but not checkout, update upstream, checkout and pull
+                git branch --force --set-upstream-to=origin/ubuntu/${SERIES} ubuntu/${SERIES}
+                git checkout --force ubuntu/${SERIES}
+                git pull --force
+            fi
+        else
+            # local branch does not exist yet, create it
+            git fetch
+            git branch --force ubuntu/${SERIES} --track origin/ubuntu/${SERIES}
+            git checkout --force ubuntu/${SERIES}
+        fi
+    fi
+    echo "git_force_ubuntu_checkout:>>>"
+}
+
+sync_package_src() {
+    echo -e "sync_package_src: <<< package [$1] series [$2]"
+    local PACKAGE=$1
+    # start with default series
+    local SERIES=${DEFAULT_SERIES}
+    [ -n "$2" ] && SERIES=$2
+
+    # check package is not in ignored projects
+    if [[ ${OG_IGNORE_PACKAGES} == *\ ${PACKAGE}\ * ]]; then
+        echo "sync_package_src: ${PACKAGE}: ignoring package"
+        echo "Ignoring package: ${PACKAGE}" >> .repositories-ignored.log
+        echo "sync_package_src:>>> ${PACKAGE}"
+        return
+    fi
+
+    # try to get source package from package info
+    for suite in '' '-updates' '-backports';
+    do
+        local SOURCE_PACKAGE="$(curl -s https://packages.ubuntu.com/${SERIES}${suite}/${PACKAGE} | grep 'Source Package' | sed -e 's/.*\">\(.*\)<\/a>.*/\1/')"
+        local TRIES=0
+        while [ -z "${SOURCE_PACKAGE}" -a $TRIES != $MAX_CURL_RETRY ]
+        do
+            echo -e "\t\tsync_package_src: ${PACKAGE}: RETRYING to find source in series [${SERIES}${suite}]"
+            SOURCE_PACKAGE="$(curl -s https://packages.ubuntu.com/${SERIES}${suite}/${PACKAGE} | grep 'Source Package' | sed -e 's/.*\">\(.*\)<\/a>.*/\1/')"
+            TRIES=$((TRIES + 1))
+        done
+
+        if [ -z "${SOURCE_PACKAGE}" ]; then
+            echo -e "\t\tsync_package_src: ${PACKAGE}: FAILED to find source in series [${SERIES}${suite}]"
+            echo -e "\t\tsync_package_src: ${PACKAGE}: curl -s https://packages.ubuntu.com/${SERIES}${suite}/${PACKAGE} | grep 'Source Package' | sed -e 's/.*\">\(.*\)<\/a>.*/\1/'"
+        else
+            echo -e "\t\tsync_package_src: ${PACKAGE}: found source package [${SOURCE_PACKAGE}] in series [${SERIES}${suite}]"
+        fi
+        if [ -n  "${SOURCE_PACKAGE}" ]; then
+            # check package is not in ignored projects
+            if [[ ${OG_IGNORE_PACKAGES} == *\ ${SOURCE_PACKAGE}\ * ]]; then
+                echo "sync_package_src: ${PACKAGE}: ignoring package"
+                echo "Ignoring package: ${PACKAGE} [ ${SOURCE_PACKAGE} ]" >> .repositories-ignored.log
+                echo "sync_package_src:>>> ${PACKAGE}"
+                return
+            fi
+
+            echo "sync_package_src: ${PACKAGE}: using source package ${SOURCE_PACKAGE}"
+            if [ -n "$(curl -s --head https://git.launchpad.net/ubuntu/+source/${SOURCE_PACKAGE} |  head -n 1 | grep '200 OK')" ]; then
+                # check if we already have code for this source package
+                if [ -e ${SOURCE_PACKAGE}/.git ]; then
+                    echo "sync_package_src: ${PACKAGE}: re-using existing, repo ${SOURCE_PACKAGE}"
+                    cd ${SOURCE_PACKAGE}
+                    git_force_ubuntu_checkout
+                    cd ..
+                    # existing repo synced
+                    echo "sync_package_src:>>> ${PACKAGE}"
+                    return
+                else
+                    # example https://git.launchpad.net/ubuntu/+source/ifupdown  -b ubuntu/${SERIES} ubuntu/${SERIES}-devel  ubuntu/${SERIES}-proposed ubuntu/${SERIES}-updates
+                    echo "sync_package_src: ${PACKAGE}: git clone https://git.launchpad.net/ubuntu/+source/${SOURCE_PACKAGE} --branch ubuntu/${SERIES} ${SOURCE_PACKAGE}"
+                    git clone https://git.launchpad.net/ubuntu/+source/${SOURCE_PACKAGE} --branch ubuntu/${SERIES} ${SOURCE_PACKAGE}
+                    if [ -e ${SOURCE_PACKAGE} ]; then
+                        git_force_ubuntu_checkout
+                        echo "sync_package_src:>>> ${PACKAGE}"
+                        return
+                    else
+                        echo "sync_package_src: ${PACKAGE}: git clone failed"
+                    fi
+                fi
+            else
+                echo "sync_package_src: ${PACKAGE}: source package ${SOURCE_PACKAGE} does not have valid git remote repository"
+                rm -rf ${SOURCE_PACKAGE}
+                # we found source package, it just does not have git repo available
+                break
+            fi
+        fi
+    done
+    [ -z "${SOURCE_PACKAGE}" ] && SOURCE_PACKAGE=${PACKAGE}
+    if [ ! -d ${SOURCE_PACKAGE} ]; then
+        echo -e "sync_package_src: $PACKAGE: !!! Cannot find git source !!!"
+        echo -e "sync_package_src: $PACKAGE: try to get source package"
+        # try to get source package url from package info
+        for suite in '' '-updates' '-backports';
+        do
+            local SOURCE_PACKAGE_URL="$(curl -s https://packages.ubuntu.com/${SERIES}${suite}/${PACKAGE} | grep '.tar.' | sed -e 's/.*href=\"\(.*\)\">.*/\1/')"
+            TRIES=0
+            while [ -z "${SOURCE_PACKAGE_URL}" -a $TRIES != $MAX_CURL_RETRY ]
+            do
+                echo -e "\t\tsync_package_src: ${PACKAGE}: RETRYING to find source url in series [${SERIES}${suite}]"
+                SOURCE_PACKAGE_URL="$(curl -s https://packages.ubuntu.com/${SERIES}${suite}/${PACKAGE} | grep '.tar.' | sed -e 's/.*href=\"\(.*\)\">.*/\1/')"
+                TRIES=$((TRIES + 1))
+            done
+            [ -n "${SOURCE_PACKAGE_URL}" ] && break
+        done
+        if [ -n "${SOURCE_PACKAGE_URL}" ]; then
+            local SOURCE_PACKAGE_FILE=$(basename ${SOURCE_PACKAGE_URL})
+            curl ${SOURCE_PACKAGE_URL} > ${SOURCE_PACKAGE_FILE}
+            mkdir -p ${SOURCE_PACKAGE}
+            tar -xf ${SOURCE_PACKAGE_FILE} -C ${SOURCE_PACKAGE} --strip-components=1
+            rm ${SOURCE_PACKAGE_FILE}
+            echo -e "${PACKAGE}" >> .repositories-without-history.log
+        else
+            echo -e "${PACKAGE}" >> .repositories-missing.log
+        fi
+    fi
+    echo "sync_package_src:>>> ${PACKAGE}"
+}
+
+# Watch your stable of backgrounded processes.
+# If a pid goes away, remove it from the array.
+wait_for_task_to_finish() {
+    ALL=0
+    TASK_DONE=0
+    if [[ -n "$1" && "$1" == "ALL" ]]; then
+        ALL=1
+    fi
+    while [ -n "${pids[*]}" ]; do
+        for pid in "${!pids[@]}"; do
+            if ! ps "$pid" >/dev/null; then
+                echo "Finished: ${pids[$pid]}"
+                unset pids[$pid]
+                let ACTIVE_TASKS--
+                if [ $ALL == 0 ]; then
+                    TASK_DONE=1
+                    break
+                fi
+            fi
+        done
+        if [ -z "${!pids[*]}" ]; then
+            break
+        fi
+        if [ $TASK_DONE == 1 ]; then
+            break;
+        fi
+        sleep 1
+    done
+}
+
+is_ready_for_next() {
+    if [[ "$ACTIVE_TASKS" -gt "$MAX_ACTIVE_TASKS" ]]; then
+        wait_for_task_to_finish
+    fi
+}
+
+get_source_for_packages() {
+    echo -e "get_source_for_packages:<<< $@"
+    local series=$1; shift
+    for package in $@
+    do
+        is_ready_for_next
+        sync_package_src ${package} ${series} &
+        local pid=$!
+        pids[$pid]=${package}
+        let ACTIVE_TASKS++
+    done
+}
+
+prepare_project_pushd() {
+    PROJECT_DIR=$1
+    mkdir -p $PROJECT_DIR
+    pushd $PROJECT_DIR >&1>&/dev/null
+}
+
+sync_manifest() {
+    prepare_project_pushd $1
+    shift
+    MANIFEST=$1
+    shift
+    if [ -n "$1" ];then
+        SERIES=$1
+    else
+        # we have no series, check if we can guess it from url
+        if [ -n $(echo "$MANIFEST" | grep jammy) ]; then
+            SERIES="jammy"
+        elif [ -n $(echo "$MANIFEST" | grep impish) ]; then
+            SERIES="impish"
+        elif [ -n $(echo "$MANIFEST" | grep hirsute) ]; then
+            SERIES="hirsute"
+        elif [ -n $(echo "$MANIFEST" | grep groovy) ]; then
+            SERIES="groovy"
+        elif [ -n $(echo "$MANIFEST" | grep focal) ]; then
+            SERIES="focal"
+        elif [ -n $(echo "$MANIFEST" | grep eoan) ]; then
+            SERIES="eoan"
+        elif [ -n $(echo "$MANIFEST" | grep disco) ]; then
+            SERIES="disco"
+        elif [ -n $(echo "$MANIFEST" | grep cosmic) ]; then
+            SERIES="cosmic"
+        elif [ -n $(echo "$MANIFEST" | grep bionic) ]; then
+            SERIES="bionic"
+        elif [ -n $(echo "$MANIFEST" | grep artful ) ]; then
+            SERIES="artful"
+        elif [ -n $(echo "$MANIFEST" | grep zestyty) ]; then
+            SERIES="zesty"
+        elif [ -n $(echo "$MANIFEST" | grep yakety) ]; then
+            SERIES="yakety"
+        elif [ -n $(echo "$MANIFEST" | grep xenial) ]; then
+            SERIES="xenial"
+        elif [ -n $(echo "$MANIFEST" | grep wily) ]; then
+            SERIES="wily"
+        elif [ -n $(echo "$MANIFEST" | grep vivid) ]; then
+            SERIES="vivid"
+        elif [ -n $(echo "$MANIFEST" | grep utopic) ]; then
+            SERIES="utopic"
+        elif [ -n $(echo "$MANIFEST" | grep trusty) ]; then
+            SERIES="trusty"
+        else
+            SERIES="saucy"
+        fi
+    fi
+    curl -s $MANIFEST > package.manifest
+    PACKAGES="$(awk -F':' '{print $1}' package.manifest | awk '{print $1}')"
+    get_source_for_packages $SERIES $PACKAGES
+    popd >&1>&/dev/null # prepare_project_pushd $1
+}
+
+clean_project() {
+    rm -rf $1
+}
+
+do_sync_single_bzr_branch() {
+    B_DIR=$1
+    B_BRANCH=$2
+    echo "Checking bzr branch:$B_BRANCH"
+    if [ -d $B_DIR ]; then
+        pull_bzr_branch $B_DIR &
+    else
+        bzr branch $B_BRANCH $B_DIR >&1>&/dev/null &
+    fi
+    local pid=$!
+    pids[$pid]=$B_BRANCH
+    let ACTIVE_TASKS++
+}
+
+do_sync_germinate_list() {
+    PROJECT_DIR=$1
+    shift
+    SOURCE_LIST_BASE=$1
+    SERIES=$(echo "$SOURCE_LIST_BASE" | awk 'BEGIN {FS="."}{print $NF}')
+    shift
+    PACKAGES=""
+    for package in $@
+    do
+        curl -s $SOURCE_LIST_BASE/${package} > ${package}
+        PACKAGES+=" "$(cat ${package} | awk '{ print $1}' | grep -v Source | grep -ve "------+------")
+        rm ${package}
+    done
+    sync_packages $PROJECT_DIR $SERIES $PACKAGES
+}
+
+do_sync_packages() {
+    echo -e "sync_packages:<<< $@"
+    prepare_project_pushd $1
+    shift
+    SERIES=$1
+    shift
+    echo -e "sync_packages: series: ${SERIES}"
+    get_source_for_packages $SERIES $@
+    popd >&1>&/dev/null # prepare_project_pushd $1
+}
+
+do_sync_dpkg_list() {
+    echo -e "sync_dpkg_list:<<< $@"
+    local PROJECT="${1}"
+    shift
+    local SERIES="${1}"
+    shift
+    local DPKG_LIST="${1}"
+    shift
+    OG_IGNORE_PACKAGES="$@ "
+    export OG_IGNORE_PACKAGES="${OG_IGNORE_PACKAGES}"
+    sync_packages ${PROJECT} ${SERIES} $(sed '1,/^.*=============================.*$/d' ${DPKG_LIST} | awk '{print $2}' | awk -F ':' '{print $1}' | sort -u )
+}
+
+do_sync_repo_branch() {
+    echo -e "sync_repo_branch:<<< $@"
+    R_DIR=$1
+    R_SERVER=$2
+    R_BRANCH=$3
+    if [ -e $R_DIR ]; then
+        pushd $R_DIR >&1>&/dev/null
+        repo sync -j7
+        popd >&1>&/dev/null
+    else
+        mkdir -p $R_DIR
+        pushd $R_DIR >&1>&/dev/null
+        if [ -z "$R_BRANCH" ]; then
+            repo init -u $R_SERVER
+        else
+            repo init -u $R_SERVER -b $R_BRANCH
+        fi
+        repo sync -j7
+        popd >&1>&/dev/null # R_DIR
+    fi
+    echo "sync_repo_branch:>>> $1"
+}
+
+do_sync_git_branch() {
+    echo -e "do_sync_git_branch:<<< [$@]"
+    GIT_DIR=$1
+    GIT_URL=$2
+    GIT_BRANCH=$3
+    if [ -e $GIT_DIR/.git ]; then
+        pushd ${GIT_DIR} >&1>&/dev/null
+        git pull --force &
+        local pid=$!
+        popd >&1>&/dev/null
+    else
+        if [ -e $GIT_DIR ]; then
+            rm -rf $GIT_DIR
+        fi
+        if [ -z "$GIT_BRANCH" ]; then
+            git clone ${GIT_URL} $GIT_DIR &
+            local pid=$!
+        else
+            git clone ${GIT_URL} -b ${GIT_BRANCH} ${GIT_DIR} &
+            local pid=$!
+        fi
+    fi
+    pids[$pid]=$GIT_DIR
+    let ACTIVE_TASKS++
+    echo "do_ync_git_branch:>>> [${1}]"
+}
+
+##
+# sync single bzr branch: <project name> <remore server> <branch>
+#
+sync_single_bzr_branch() {
+    do_sync_single_bzr_branch $@
+}
+
+##
+# sync germinate list: <project name> <source list url>
+#
+sync_germinate_list() {
+    do_sync_germinate_list $@
+}
+
+##
+# sync deb packages list: <project name> <Ubuntu series> package [[package] [package] ......]
+#
+sync_packages() {
+    do_sync_packages $@
+}
+
+##
+# sync deb package list from dpkg.list : <project name> <Ubuntu seriest> <path to dpkg.list> [ package(s) to ignore]
+#
+sync_dpkg_list() {
+    do_sync_dpkg_list $@
+}
+
+##
+# sync repo branch: <project name> <remore server> <branch>
+#
+sync_repo_branch() {
+    do_sync_repo_branch $@
+}
+
+##
+# sync single git branch: <project name> <remore server> <branch>
+#
+sync_git_branch() {
+    do_sync_git_branch $@
+}
+
+do_sync_code_from_snap_config() {
+    while read project
+    do
+        is_ready_for_next
+        local src_conf=$(snapctl get -d sources.${project} | jq '.[]')
+        # get minimal projec config
+        local project_type=$(echo ${src_conf} | jq -r '.type | select (.!=null)' )
+        local project_name=$(echo ${src_conf} | jq -r '.name | select (.!=null)' )
+        if [ -z "${project_type}" ] || [ -z "${project_name}" ]; then
+            echo "WARNING: Source definition for \"${project}\" in snap config is missing type or project name"
+            continue
+        fi
+        case ${project_type} in
+            git)
+                # get additional configs
+                local git_url=$(echo ${src_conf} | jq -r '.url | select (.!=null)' )
+                local git_branch=$(echo ${src_conf} | jq -r '.branch | select (.!=null)' )
+                if [ -z "${git_url}" ] || [ -z "${git_branch}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"branch\" configurations, ignoring it"
+                    continue
+                fi
+                sync_git_branch ${project_name} ${git_url} ${git_branch}
+                ;;
+            repo)
+                # get additional configs
+                local repo_url=$(echo ${src_conf} | jq -r '.url | select (.!=null)' )
+                local repo_branch=$(echo ${src_conf} | jq -r '.branch | select (.!=null)' )
+                if [ -z "${repo_url}" ] || [ -z "${repo_branch}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"branch\" configurations, ignoring it"
+                    continue
+                fi
+                sync_repo_branch ${project_name} ${repo_url} ${repo_branch}
+                ;;
+            dpkg-list)
+                # get additional configs
+                local dpkg_list=$(echo ${src_conf} | jq -r '.list | select (.!=null)' )
+                local ubuntu_series=$(echo ${src_conf} | jq -r '.series | select (.!=null)' )
+                local ignore_packages=$(echo ${src_conf} | jq -r '.ignore-debs[] | select (.!=null)' )
+                if [ -z "${dpkg_list}" ] || [ -z "${ubuntu_series}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"list\", \"series\" configurations, ignoring it"
+                    continue
+                fi
+                sync_dpkg_list ${project_name} ${ubuntu_series} ${dpkg_list} ${ignore_packages}
+                ;;
+            deb)
+                # get additional configs
+                local ubuntu_series=$(echo ${src_conf} | jq -r '.series | select (.!=null)' )
+                local packages=$(echo ${src_conf} | jq -r '.debs[] | select (.!=null)' )
+                if [ -z "${ubuntu_series}" ] || [ -z "${packages}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"series\", \"debs\" configurations, ignoring it"
+                    continue
+                fi
+                sync_packages ${project_name} ${ubuntu_series} ${packages}
+                ;;
+            germinate)
+                # get additional configs
+                local germinate_url=$(echo ${src_conf} | jq -r '.url | select (.!=null)' )
+                if [ -z "${germinate_url}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing required \"url\" configuration, ignoring it"
+                    continue
+                fi
+                do_sync_germinate_list ${project_name} ${germinate_url}
+                ;;
+            bzr)
+                # get additional configs
+                local bzr_url=$(echo ${src_conf} | jq -r '.url | select (.!=null)' )
+                local bzr_branch=$(echo ${src_conf} | jq -r '.branch | select (.!=null)' )
+                if [ -z "${bzr_url}" ] || [ -z "${bzr_branch}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"branch\" configurations, ignoring it"
+                    continue
+                fi
+                sync_single_bzr_branch ${project_name} ${bzr_url} ${bzr_branch}
+                ;;
+            *)
+                echo -e "WARNING: Unknown source type for ${project}"
+                ;;
+        esac
+    done <<< "$(snapctl get -d sources | jq -r '.sources |  keys[] ')"
+}
+
+# do sync all the code
+# Sync all code
+sync_all_source() {
+    unset pids
+    declare -A pids
+
+    ACTIVE_TASKS="0"
+    mkdir -p ${OPENGROK_SRC_ROOT}
+    # get into target folder
+    pushd ${OPENGROK_SRC_ROOT} >&1>&/dev/null
+
+    # remove sync logs first
+    find . -name ".repositories-*.log" -exec rm {} \;
+
+    # sync source from snap config
+    do_sync_code_from_snap_config
+
+    # Sync all code from config file
+    if [[ ! -e ${SNAP_COMMON}/source.conf ]]; then
+        echo "Source configuration [${SNAP_COMMON}/source.conf] missing, skipping it"
+    else
+        source ${SNAP_COMMON}/source.conf
+    fi
+    echo "Waiting for ${ACTIVE_TASKS} tasks to complete...."
+    echo "${pids}"
+    wait_for_task_to_finish ALL
+    echo "All code is synced, refresh index"
+
+    popd >&1>&/dev/null # src
+}
