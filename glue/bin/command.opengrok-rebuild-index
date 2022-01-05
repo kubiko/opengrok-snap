@@ -1,12 +1,5 @@
 #!/bin/bash
 
-if [ "$(${SNAP}/usr/bin/whoami)" != "root" ]; then
-    echo "Please run as root!!"
-    exit 0
-fi
-
-source ${SNAP}/bin/read-settings
-
 # First delete existing index
 echo "cleaning existing index..."
 rm -rf ${OPENGROK_DATA_ROOT}

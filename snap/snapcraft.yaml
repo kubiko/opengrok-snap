@@ -53,6 +53,9 @@ layout:
 
 apps:
     opengrok:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok
         adapter: none
         plugs:
@@ -65,6 +68,9 @@ apps:
             - system-observe
 
     config-merge:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-config-merge
         adapter: none
         plugs:
@@ -77,6 +83,9 @@ apps:
             - system-observe
 
     deploy:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-deploy
         adapter: none
         plugs:
@@ -89,6 +98,9 @@ apps:
             - system-observe
 
     groups:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-groups
         adapter: none
         plugs:
@@ -101,6 +113,9 @@ apps:
             - system-observe
 
     indexer:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-indexer
         plugs:
             - network-bind
@@ -112,6 +127,9 @@ apps:
             - system-observe
 
     java:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-java
         adapter: none
         plugs:
@@ -124,6 +142,9 @@ apps:
             - system-observe
 
     mirror:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-mirror
         adapter: none
         plugs:
@@ -136,6 +157,9 @@ apps:
             - system-observe
 
     projadm:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-projadm
         adapter: none
         plugs:
@@ -148,6 +172,9 @@ apps:
             - system-observe
 
     reindex-project:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-reindex-project
         adapter: none
         plugs:
@@ -160,6 +187,9 @@ apps:
             - system-observe
 
     sync:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-sync
         adapter: none
         plugs:
@@ -191,6 +221,9 @@ apps:
             CATALINA_TMPDIR: /tmp
 
     index-sync-daemon:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-sync
         daemon: simple
         timer: 00:30~01:00
@@ -205,6 +238,9 @@ apps:
             - system-observe
 
     rebuild-index-helper:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-rebuild-index
         daemon: simple
         after:
@@ -221,6 +257,8 @@ apps:
             - system-observe
 
     update-source:
+        command-chain:
+            - bin/read-settings
         command: bin/update-src
         adapter: none
         plugs:
@@ -288,17 +326,28 @@ parts:
             tar -xf distribution/target/opengrok-*.tar.gz -C ${SNAPCRAFT_PART_INSTALL}/dist/ --strip-components=1
             sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = ${SNAP_COMMON}/logs/#g' \
                 ${SNAPCRAFT_PART_INSTALL}/dist/doc/logging.properties
-            # mkdir -p ${SNAPCRAFT_PART_INSTALL}/opengrok-tools
-            # PYTHONUSERBASE=${SNAPCRAFT_PART_INSTALL}/opengrok-tools python3 -m pip install --no-cache-dir ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
+            # install opengrok-tools
             cd ${SNAPCRAFT_PART_INSTALL}
             python3 -m venv opengrok-tools
             cd opengrok-tools
-            bin/python3 -m pip install --no-cache-dir ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
+            bin/python3 \
+              -m pip install \
+              --no-cache-dir \
+              ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
             ln -sf ../../usr/bin/python3 bin/python3
-            sed -i 's|VIRTUAL_ENV=\".*|VIRTUAL_ENV=\"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate
-            sed -i 's|setenv VIRTUAL_ENV \".*|setenv VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.csh
-            sed -i 's|set -gx VIRTUAL_ENV \".*|set -gx VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.fish
-            find ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin -type f -exec sed -i 's|#!.*/parts/opengrok/install/opengrok-tools/bin/python3|#!/snap/'"${SNAPCRAFT_PROJECT_NAME}"'/current/opengrok-tools/bin/python3|g' {} \;
+            sed -i \
+              -e 's|VIRTUAL_ENV=\".*|VIRTUAL_ENV=\"${SNAP}/opengrok-tools\"|g' \
+              -e 's|VIRTUAL_ENV \".*|VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' \
+              ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.*
+            # create active snap chain command
+            cp ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate \
+               ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
+            chmod +x ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
+            echo "\nexec \"\$@\"" >> \
+               ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
+            find ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin \
+              -type f \
+              -exec sed -i 's|#!.*/parts/opengrok/install/opengrok-tools/bin/python3|#!/snap/'"${SNAPCRAFT_PROJECT_NAME}"'/current/opengrok-tools/bin/python3|g' {} \;
             # clean sym link, so we can use organize feature without worry for collision
             find ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/ \
                  -maxdepth 1 \

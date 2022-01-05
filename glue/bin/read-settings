@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ "$(${SNAP}/usr/bin/whoami)" != "root" ]; then
+    echo "Please run as root!!"
+    exit 0
+fi
 
 add_ssh_key() {
     [ "${DEBUG}" = "1" ] && echo -e "add_ssh_key ${1}"
@@ -47,6 +51,7 @@ done
 # make sure src and data directoreies exist
 mkdir -p ${OPENGROK_SRC_ROOT}
 mkdir -p ${OPENGROK_DATA_ROOT}
+mkdir -p ${OPENGROK_DATA_ROOT}/../plugins
 
 # before runing any task, copy configurations to temp locaton where SNAP, SNAP_DATA, SNAP_COMMON can be updated
 cp -r ${SNAP_COMMON}/logging.properties /tmp
@@ -57,3 +62,5 @@ find /tmp -type f -name "*.sh" -o -name "*.conf" -o -name "*.properties" | \
                -e 's#${SNAP_DATA}#'"${SNAP_DATA}"'#g' \
                -e 's#${HTTP_PORT}#'"${HTTP_PORT}"'#g' \
                -e 's#${WEBAPP_NAME}#'"${WEBAPP_NAME}"'#g'
+
+exec "$@"
