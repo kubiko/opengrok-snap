@@ -458,10 +458,15 @@ parts:
 
     universal-ctags:
         plugin: autotools
+        configflags:
+            - --enable-yaml
+            - --enable-xml
+            - --enable-json
         stage-packages:
             - libjansson4
             - libicu60
             - libxml2
+            - libyaml-0-2
         source: https://github.com/universal-ctags/ctags.git
         override-pull: |
             snapcraftctl pull
@@ -469,16 +474,16 @@ parts:
 
     libc-shm-shim:
         plugin: nil
-        override-pull: |
-            SNAPPY_STORE_NO_CDN=1 snap download libc-shm-shim --channel 18/beta
-        override-build: |
-            unsquashfs -f -d ${SNAPCRAFT_PART_INSTALL} libc-shm-shim*.snap
-        organize:
-            meta/: meta.libc-shm-shim/
-            snap/: snap.libc-shm-shim/
+        stage-snaps:
+            - libc-shm-shim/18/beta
 
 build-packages:
+    - libapr1-dev
+    - libjansson-dev
+    - libssl-dev
+    - libxml2-dev
     - libxml2-utils
+    - libyaml-dev
     - pkg-config
     - python3-venv
     - python3-pip
