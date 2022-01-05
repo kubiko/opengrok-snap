@@ -132,6 +132,7 @@ apps:
             - bin/read-settings
             - opengrok-tools/bin/activate-exec
         command: bin/command.opengrok-indexer
+        adapter: none
         plugs:
             - network-bind
             - home
