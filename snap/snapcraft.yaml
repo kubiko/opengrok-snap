@@ -171,6 +171,21 @@ apps:
             - process-control
             - system-observe
 
+    add-project:
+        command-chain:
+            - bin/read-settings
+            - opengrok-tools/bin/activate-exec
+        command: bin/command.opengrok-add-project
+        adapter: none
+        plugs:
+            - network-bind
+            - home
+            - removable-media
+            - ssh-keys
+            - mount-observe
+            - process-control
+            - system-observe
+
     reindex-project:
         command-chain:
             - bin/read-settings
