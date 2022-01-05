@@ -28,20 +28,32 @@ fi
 if ! [ -d ${SNAP_COMMON}/scripts ]; then
     cp -r ${SNAP}/scripts ${SNAP_COMMON}
 else
-    # temp fix for previous release with bug
+    # fixes for migration from previous releases
     chmod +x ${SNAP_COMMON}/scripts/check-indexer-logs.sh
     [ -n "$(grep OG_PROJECT ${SNAP_COMMON}/scripts/sync.conf)" ] && cp ${SNAP}/scripts/sync.conf  ${SNAP_COMMON}/scripts/
     # fix for java 11 not supporting -d64 option anymore
     [ -n "$(grep '\-J=\-d64' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/-J=-d64,//g' ${SNAP_COMMON}/scripts/sync.conf
     # fix for "cleanup is not a list of commands"
     [ -n "$(grep '  command' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/  command:/  - command:/g' ${SNAP_COMMON}/scripts/sync.conf
+
+    # fix for REST API change: cssClass -> messageLevel
+    if [ -n "$(grep "cssClass" ${SNAP_COMMON}/scripts/sync.conf)" ]; then
+        logger "snap.${SNAP_INSTANCE_NAME}.hook-common: fixing cssClass -> messageLevel in ${SNAP_COMMON}/scripts/sync.conf"
+        sed -i 's/cssClass/messageLevel/g' ${SNAP_COMMON}/scripts/sync.conf
+    fi
+    # fix mirror-config.yml: $SNAP needs to be replaces with actual path
+    if [ -n "$(grep "\${SNAP}" ${SNAP_COMMON}/etc/mirror-config.yml)" ]; then
+        logger "snap.${SNAP_INSTANCE_NAME}.hook-common: replacing \${SNAP} with real path in ${SNAP_COMMON}/etc/mirror-config.yml"
+        SNAP_CURRENT=$(dirname ${SNAP})/current
+        sed -i 's|${SNAP}|'"${SNAP_CURRENT}"'|g' ${SNAP_COMMON}/etc/mirror-config.yml
+    fi
+fi
+
+# ensure there is top level source snap config
+if [ -z "$(snapctl get -d sources)" ]; then
+    snapctl set sources='{}'
 fi
 
 mkdir -p ${SNAP_COMMON}/src
 mkdir -p ${SNAP_COMMON}/data
 mkdir -p ${SNAP_COMMON}/logs
-
-# check if we have any source configuration and add example if there is none
-if [ -z "$(snapctl get source)" ]; then
-    snapctl set source='{"opengrok":{"url":"https://github.com/oracle/opengrok.git","type":"git","tag":"master","project":"opengrok"}}'
-fi
