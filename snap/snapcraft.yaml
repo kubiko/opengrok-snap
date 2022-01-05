@@ -327,6 +327,33 @@ parts:
         stage:
             - -usr/lib/jvm
 
+    tomcat-native:
+        after:
+            - tomcat
+            - opengrok
+        plugin: autotools
+        source: https://dlcdn.apache.org/tomcat/tomcat-connectors/native/1.2.31/source/tomcat-native-1.2.31-src.tar.gz
+        source-type: tar
+        source-subdir: native
+        override-build: |
+            cd ${SNAPCRAFT_PART_BUILD}/native
+            [ ! -f ./configure ] && autoreconf
+            CATALINA_HOME="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
+            JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+            ./configure \
+              --with-apr=/usr/bin/apr-1-config \
+              --with-java-home=${JAVA_HOME} \
+              --with-ssl=yes \
+              --prefix=${CATALINA_HOME} \
+              --libdir=/lib/${SNAPCRAFT_ARCH_TRIPLET}
+            make && make install DESTDIR=${SNAPCRAFT_PART_INSTALL}
+        stage-packages:
+            - libapr1
+            - libssl1.1
+        stage:
+            - -lib/*/libtcnative*.a
+            - -lib/*/libtcnative*.la
+
     opengrok:
         plugin: maven
         source: https://github.com/OpenGrok/OpenGrok.git
