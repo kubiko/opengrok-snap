@@ -47,3 +47,17 @@ else
     snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
 fi
 snapctl unset last-opengrok-version
+
+# parse source config file if it exist and import it to snap config
+if [ -f "${SNAP}/src-updater/update-source" ]; then
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: sourcing '$SNAP/src-updater/update-source'"
+    source ${SNAP}/src-updater/update-source
+    if [ -z "$(type import_definition_from_source_config 2> /dev/null)" ]; then
+        logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}:''update-source' helper is missing 'import_definition_from_source_config' function"
+        logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Ignoring the call"
+    else
+        import_definition_from_source_config
+    fi
+else
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Missing 'update-source' helper, skipping import"
+fi
