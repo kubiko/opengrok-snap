@@ -1,9 +1,13 @@
 #!/bin/bash
 
-# First delete existing index
-echo "cleaning existing index..."
-rm -rf ${OPENGROK_DATA_ROOT}
-mkdir -p ${OPENGROK_DATA_ROOT}
+# check if we should rebuild index from scratch or just re-run indexer
+if [ "$(snapctl get forced-reindex)" = "yes" ]; then
+  # delete existing index
+  echo "cleaning existing index..."
+  rm -rf ${OPENGROK_DATA_ROOT}
+  mkdir -p ${OPENGROK_DATA_ROOT}
+fi
+snapctl unset forced-reindex
 
 # build fresh index
 ${SNAP}/bin/command.opengrok-index-all

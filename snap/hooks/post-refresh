@@ -18,36 +18,32 @@ ${SNAP}/bin/snap-hooks-common
 #
 # Additionally we rebuild index if old or new version is snapshot, as those are
 # nightly builds without guarantee
-do_rebuild_index() {
-    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
-    # start reindex helper service
-    snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
-}
-do_not_rebuild_index() {
-    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
-    # disable reindex helper service
-    snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
-}
 auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
+# if not defined use default
+[ -z "${auto_rebuild}" ] && auto_rebuild=$(jq -r '.opengrok."auto-rebuild-index".default' ${SNAP}/etc/snap-configuration.json)
 previous_version="$(snapctl get last-opengrok-version)"
 if [ "${auto_rebuild}" = "ON" ]; then
     if [ "${SNAP_VERSION}" = "${previous_version}" ]; then
-        do_not_rebuild_index
+        forced_reindex="no"
     # check for snapshot build
     elif [ "${SNAP_VERSION#*-}" != "${SNAP_VERSION}" ] ||
          [ "${previous_version#*-}" != "${previous_version}" ]; then
          # one of the versions is snapshot
-         do_rebuild_index
+         forced_reindex="yes"
     # check for major version change or if any version is snapshot
     elif [ "${SNAP_VERSION%.*}" = "${previous_version%.*}" ]; then
         # major versions are same
-        do_not_rebuild_index
+        forced_reindex="no"
     else
         # major version differers -> rebuild index
-        do_rebuild_index
+        forced_reindex="yes"
     fi
+    snapctl set forced-reindex="${forced_reindex}"
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Rebuilding the index: forced-reindex: ${forced_reindex}, previous version: ${previous_version}, current version: ${SNAP_VERSION}"
+    snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
 else
     # auto rebuild is disabled
-    do_not_rebuild_index
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Not rebuild the index. (auto-rebuld: ${auto_rebuild}, versions: [${SNAP_VERSION}]/[${previous_version}])"
+    snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
 fi
 snapctl unset last-opengrok-version
