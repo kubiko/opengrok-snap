@@ -9,18 +9,45 @@ ${SNAP}/bin/snap-hooks-common
 # clean ssh-agent.socket
 [ -e ${SNAP_DATA}/ssh-agent.socket ] && rm ${SNAP_DATA}/ssh-agent.socket
 
-# upgrading OpenGrok often corrupts indexed history,
-# as precaution automatically rebuild index is feature is enabled
-# and opengrok version has changed
-auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
-previous_version="$(snapctl get last-opengrok-version)"
-if [ "${auto_rebuild}" = "ON" ] && [ "${SNAP_VERSION}" = "${previous_version}" ]; then
-    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
-    # disable reindex helper service
-    snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
-else
+# upgrading OpenGrok often corrupts indexed history between major version
+# The versioning scheme used is x.y.z, where a change in y constitutes major release;
+# if only z changes, this is minor release and index does not need to be rebuilt
+# more info: https://github.com/oracle/opengrok/wiki/Indexing-lifecycle
+# since index rebuild can be expensive operation, this is optional operation
+# though enabled by default
+#
+# Additionally we rebuild index if old or new version is snapshot, as those are
+# nightly builds without guarantee
+do_rebuild_index() {
     logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: Rebuilding index...(${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
     # start reindex helper service
     snapctl start ${SNAP_INSTANCE_NAME}.rebuild-index-helper &
+}
+do_not_rebuild_index() {
+    logger "snap.${SNAP_INSTANCE_NAME}.hook.${hook_name}: No need to rebuild the index. (${auto_rebuild},[${SNAP_VERSION}]/[${previous_version}])"
+    # disable reindex helper service
+    snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
+}
+auto_rebuild="$(snapctl get opengrok.auto-rebuild-index)"
+previous_version="$(snapctl get last-opengrok-version)"
+if [ "${auto_rebuild}" = "ON" ]; then
+    if [ "${SNAP_VERSION}" = "${previous_version}" ]; then
+        do_not_rebuild_index
+    # check for snapshot build
+    elif [ "${SNAP_VERSION#*-}" != "${SNAP_VERSION}" ] ||
+         [ "${previous_version#*-}" != "${previous_version}" ]; then
+         # one of the versions is snapshot
+         do_rebuild_index
+    # check for major version change or if any version is snapshot
+    elif [ "${SNAP_VERSION%.*}" = "${previous_version%.*}" ]; then
+        # major versions are same
+        do_not_rebuild_index
+    else
+        # major version differers -> rebuild index
+        do_rebuild_index
+    fi
+else
+    # auto rebuild is disabled
+    do_not_rebuild_index
 fi
 snapctl unset last-opengrok-version
