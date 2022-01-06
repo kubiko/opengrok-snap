@@ -33,7 +33,7 @@
 		"auto-rebuild-index": {
 			"description": "Automatically rebuild index when new version is installed. Permited values: ON/OFF",
 			"env": "AUTO_REBUILD_INDEX",
-			"default": "NO"
+			"default": "ON"
 		}
 	},
 	"tomcat": {
