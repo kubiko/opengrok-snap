@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ -f "${SNAP}/src-updater/update-source" ]; then
+    echo "Sourcing '$SNAP/src-updater/update-source'"
+    source ${SNAP}/src-updater/update-source
+    if [ -z "$(type import_debs_from_dpkg_list)" ]; then
+        echo "'update-source' helper is missing 'import_debs_from_dpkg_list' function"
+        echo "Ignoring the call"
+    else
+        import_debs_from_dpkg_list $@
+        echo "Check imported definition with: $ snap get -d ${SNAP_INSTANCE_NAME} sources.${1}"
+    fi
+else
+    echo "Missing 'update-source' helper, ignoring the call"
+fi

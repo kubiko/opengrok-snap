@@ -232,6 +232,10 @@ apps:
             - process-control
             - system-observe
 
+    import-dpkg-list:
+        command: bin/command.import-dpkg-list
+        adapter: none
+
     help:
        command: bin/snap-help
        adapter: none
