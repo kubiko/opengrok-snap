@@ -84,14 +84,6 @@ sync_package_src() {
     local SERIES=${DEFAULT_SERIES}
     [ -n "$2" ] && SERIES=$2
 
-    # check package is not in ignored projects
-    if [[ ${OG_IGNORE_PACKAGES} == *\ ${PACKAGE}\ * ]]; then
-        echo "sync_package_src: ${PACKAGE}: ignoring package"
-        echo "Ignoring package: ${PACKAGE}" >> .repositories-ignored.log
-        echo "sync_package_src:>>> ${PACKAGE}"
-        return
-    fi
-
     # try to get source package from package info
     for suite in '' '-updates' '-backports';
     do
@@ -111,7 +103,7 @@ sync_package_src() {
             echo -e "\t\tsync_package_src: ${PACKAGE}: found source package [${SOURCE_PACKAGE}] in series [${SERIES}${suite}]"
         fi
         if [ -n  "${SOURCE_PACKAGE}" ]; then
-            # check package is not in ignored projects
+            # check new source package is not in ignored projects
             if [[ ${OG_IGNORE_PACKAGES} == *\ ${SOURCE_PACKAGE}\ * ]]; then
                 echo "sync_package_src: ${PACKAGE}: ignoring package"
                 echo "Ignoring package: ${PACKAGE} [ ${SOURCE_PACKAGE} ]" >> .repositories-ignored.log
@@ -308,43 +300,43 @@ do_sync_single_bzr_branch() {
 }
 
 do_sync_germinate_list() {
-    PROJECT_DIR=$1
+    local project_dir=${1}
     shift
-    SOURCE_LIST_BASE=$1
-    SERIES=$(echo "$SOURCE_LIST_BASE" | awk 'BEGIN {FS="."}{print $NF}')
+    local germinate_url_base=$1
+    local series=$(echo "$germinate_url_base" | awk 'BEGIN {FS="."}{print $NF}')
     shift
-    PACKAGES=""
-    for package in $@
+    local packages=""
+    for list in $@
     do
-        curl -s $SOURCE_LIST_BASE/${package} > ${package}
-        PACKAGES+=" "$(cat ${package} | awk '{ print $1}' | grep -v Source | grep -ve "------+------")
-        rm ${package}
+        packages+=" $(curl -s ${germinate_url_base}/${list} |  sed -ne:n -e '2d;N;1,4bn' -eP\;D |  awk -F '|' '{ print $2}' | tr -d ' ')"
     done
-    sync_packages $PROJECT_DIR $SERIES $PACKAGES
+    # ensure all packages are unique
+    sync_packages ${project_dir} ${series} $(echo ${packages} | tr " " "\n" | sort | uniq)
 }
 
 do_sync_packages() {
     echo -e "sync_packages:<<< $@"
-    prepare_project_pushd $1
+    local project="${1}"
     shift
-    SERIES=$1
+    local series="${1}"
     shift
-    echo -e "sync_packages: series: ${SERIES}"
-    get_source_for_packages $SERIES $@
-    popd >&1>&/dev/null # prepare_project_pushd $1
+    prepare_project_pushd ${project}
+    echo -e "sync_packages: series: ${series}"
+    get_source_for_packages ${series} $@
+    popd >&1>&/dev/null # prepare_project_pushd ${project}
 }
 
 do_sync_dpkg_list() {
     echo -e "sync_dpkg_list:<<< $@"
-    local PROJECT="${1}"
+    local project="${1}"
     shift
-    local SERIES="${1}"
+    local series="${1}"
     shift
-    local DPKG_LIST="${1}"
+    local dpkg_list="${1}"
     shift
-    OG_IGNORE_PACKAGES="$@ "
-    export OG_IGNORE_PACKAGES="${OG_IGNORE_PACKAGES}"
-    sync_packages ${PROJECT} ${SERIES} $(sed '1,/^.*=============================.*$/d' ${DPKG_LIST} | awk '{print $2}' | awk -F ':' '{print $1}' | sort -u )
+    local ignore_packages="$@ "
+    export OG_IGNORE_PACKAGES="${ignore_packages}"
+    do_sync_packages ${project} ${series} $(sed '1,/^.*=============================.*$/d' ${dpkg_list} | awk '{print $2}' | awk -F ':' '{print $1}' | sort -u )
 }
 
 do_sync_repo_branch() {
@@ -398,45 +390,158 @@ do_sync_git_branch() {
 }
 
 ##
-# sync single bzr branch: <project name> <remore server> <branch>
+# import deb list from piped dpkg list file
+# import_debs_from_dpkg_list: <project name> <ubuntu series> [ list of packages to be ignored]
 #
-sync_single_bzr_branch() {
-    do_sync_single_bzr_branch $@
+import_debs_from_dpkg_list() {
+    if [ "--help" = "${1}" ] || [ "-h" = "${1}" ]; then
+        echo -e "Import list of debian packages from dpkg.list"
+        echo -e "Use as:"
+        echo -e "\t$ $ cat /snap/core20/current/usr/share/snappy/dpkg.list | sudo ${SNAP_INSTANCE_NAME}.import-dpkg-list <project name> <Ubuntu series> [list of source packages to ignore]"
+        return
+    fi
+    local name="${1}"
+    shift
+    local series="${1}"
+    shift
+    local ignore_packages="$@"
+    local all_debs
+    if [ -z "${name}" ] || [ -z "${series}" ]; then
+        echo "import_debs_from_dpkg_list: Project definition not complete: name: [${name}], series:[${series}]"
+        return
+    fi
+    # use tmp file to store pipe content so we can use here strings as while loop input
+    local temp_dpkg_list="/tmp/temp_dpkg.list"
+    cat > ${temp_dpkg_list}
+    while read line
+    do
+      local d=$(echo ${line} | grep '^ii*' | awk '{print $2}' | awk -F ':' '{print $1}' | sort -u )
+      if [ -n "${d}" ]; then
+          all_debs="${all_debs} ${d}"
+      fi
+
+    done <<< "$(cat ${temp_dpkg_list})"
+    rm ${temp_dpkg_list}
+
+    local debs_array="$(jq -ncR '[inputs]'  <<< $(echo $all_debs | tr " " "\n"))"
+    snapctl set sources.${name}="{\"name\":\"${name}\", \"type\":\"deb\", \"series\":\"${series}\", \"debs\": ${debs_array} }"
+
+
+    if [ -n "${ignore_packages}" ]; then
+        local ignore_array=$(jq -ncR '[inputs]'  <<< $(echo $ignore_packages | tr " " "\n"))
+        snapctl set sources.${name}.ignore-packages="${ignore_array}"
+    fi
+}
+
+import_definition_from_source_config() {
+    # parse data from config file and populate with it snap config
+    if [[ ! -e ${SNAP_COMMON}/source.conf ]]; then
+        echo "Source configuration [${SNAP_COMMON}/source.conf] missing, skipping it"
+    else
+        source ${SNAP_COMMON}/source.conf
+        # add notice about deprecation if needed
+        if [ -z "$(grep "### DEPRECATED ###" ${SNAP_COMMON}/source.conf)" ]; then
+            echo -e "\n\n" >> ${SNAP_COMMON}/source.conf
+            echo -e "### DEPRECATED ###" >> ${SNAP_COMMON}/source.conf
+            echo -e "## This config file has been now deprecated" >> ${SNAP_COMMON}/source.conf
+            echo -e "## Content of the file has been parsed and added to the snap config" >> ${SNAP_COMMON}/source.conf
+            echo -e "## For more info run ${SNAP_INSTANCE_NAME}.help" >> ${SNAP_COMMON}/source.conf
+        fi
+    fi
 }
 
 ##
-# sync germinate list: <project name> <source list url>
+# sync single bzr branch: <project name> <remore server> <branch>
+#
+sync_single_bzr_branch() {
+    local name=${1}
+    local url=${2}
+    local branch=${3}
+    if [ -z "${name}" ] || [ -z "${url}" ] || [ -z "${branch}" ]; then
+        echo "sync_single_bzr_branch: Project definition not complete: name: [${name}], url:[${url}], branch: [${branch}]"
+    else
+        snapctl set sources.${name}="{\"name\":\"${name}\", \"type\":\"bzr\", \"url\":\"${url}\", \"branch\":\"${branch}\"}"
+    fi
+}
+
+##
+# sync germinate list: <project name> <germinate base url> [ list of list to include]
 #
 sync_germinate_list() {
-    do_sync_germinate_list $@
+    local name=${1}
+    shift
+    local url=${1}
+    shift
+    local lists="$@"
+    if [ -z "${name}" ] || [ -z "${url}" ] || [ -z "${lists}"]; then
+        echo "sync_germinate_list: Project definition not complete: name: [${name}], url:[${url}], lists: [${lists}]"
+    else
+        local list_array=$(jq -ncR '[inputs]'  <<< $(echo $list_array | tr " " "\n"))
+        snapctl set sources.${name}="{\"name\":\"${name}\", \"type\":\"germinate\", \"url\":\"${url}\", \"\": ${list_array} }"
+    fi
 }
 
 ##
 # sync deb packages list: <project name> <Ubuntu series> package [[package] [package] ......]
 #
 sync_packages() {
-    do_sync_packages $@
+    local name=${1}
+    shift
+    local series=${1}
+    shift
+    local debs=$@
+    if [ -z "${name}" ] || [ -z "${series}" ] || [ -z "${debs}" ]; then
+        echo "sync_packages: Project definition not complete: name: [${name}], series:[${series}], debs: [${debs}]"
+    else
+        local debs_array=$(jq -ncR '[inputs]'  <<< $(echo $debs | tr " " "\n"))
+        snapctl set sources.${name}="{\"name\":\"${name}\", \"type\":\"deb\", \"series\":\"${series}\", \"debs\": ${debs_array} }"
+    fi
 }
 
 ##
 # sync deb package list from dpkg.list : <project name> <Ubuntu seriest> <path to dpkg.list> [ package(s) to ignore]
 #
 sync_dpkg_list() {
-    do_sync_dpkg_list $@
+    local name=${1}
+    shift
+    local series=${1}
+    shift
+    local dpkg_list=${1}
+    shift
+    local ignore_packages=$@
+    if [ -z "${name}" ] || [ -z "${series}" ] || [ -z "${dpkg_list}" ]; then
+        echo "sync_dpkg_list: Project definition not complete: name: [${name}], series:[${series}], list: [${dpkg_list}]"
+    else
+        cat ${dpkg_list} | import_debs_from_dpkg_list ${name} ${series} ${ignore_packages}
+    fi
 }
 
 ##
 # sync repo branch: <project name> <remore server> <branch>
 #
 sync_repo_branch() {
-    do_sync_repo_branch $@
+    local name=${1}
+    local url=${2}
+    local branch=${3}
+    if [ -z "${name}" ] || [ -z "${url}" ] || [ -z "${branch}" ]; then
+        echo "sync_repo_branch: Project definition not complete: name: [${name}], url:[${url}], branch: [${branch}]"
+    else
+        snapctl set sources.${name}="{\"name\":\"${name}\", \"type\":\"repo\", \"url\":\"${url}\", \"branch\":\"${branch}\"}"
+    fi
 }
 
 ##
 # sync single git branch: <project name> <remore server> <branch>
 #
 sync_git_branch() {
-    do_sync_git_branch $@
+    local name=${1}
+    local url=${2}
+    local branch=${3}
+    if [ -z "${name}" ] || [ -z "${url}" ] || [ -z "${branch}" ]; then
+        echo "sync_git_branch: Project definition not complete: name: [${name}], url:[${url}], branch: [${branch}]"
+    else
+        snapctl set sources.${name}="{\"name\":\"${name}\", \"type\":\"git\", \"url\":\"${url}\", \"branch\":\"${branch}\"}"
+    fi
 }
 
 do_sync_code_from_snap_config() {
@@ -460,7 +565,7 @@ do_sync_code_from_snap_config() {
                     echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"branch\" configurations, ignoring it"
                     continue
                 fi
-                sync_git_branch ${project_name} ${git_url} ${git_branch}
+                do_sync_git_branch ${project_name} ${git_url} ${git_branch}
                 ;;
             repo)
                 # get additional configs
@@ -470,18 +575,7 @@ do_sync_code_from_snap_config() {
                     echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"branch\" configurations, ignoring it"
                     continue
                 fi
-                sync_repo_branch ${project_name} ${repo_url} ${repo_branch}
-                ;;
-            dpkg-list)
-                # get additional configs
-                local dpkg_list=$(echo ${src_conf} | jq -r '.list | select (.!=null)' )
-                local ubuntu_series=$(echo ${src_conf} | jq -r '.series | select (.!=null)' )
-                local ignore_packages=$(echo ${src_conf} | jq -r '.ignore-debs[] | select (.!=null)' )
-                if [ -z "${dpkg_list}" ] || [ -z "${ubuntu_series}" ]; then
-                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"list\", \"series\" configurations, ignoring it"
-                    continue
-                fi
-                sync_dpkg_list ${project_name} ${ubuntu_series} ${dpkg_list} ${ignore_packages}
+                do_sync_repo_branch ${project_name} ${repo_url} ${repo_branch}
                 ;;
             deb)
                 # get additional configs
@@ -491,16 +585,22 @@ do_sync_code_from_snap_config() {
                     echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"series\", \"debs\" configurations, ignoring it"
                     continue
                 fi
-                sync_packages ${project_name} ${ubuntu_series} ${packages}
+                # read ignore list if there
+                local ignore_packages=$(echo ${src_conf} | jq -r '."ignore-packages"[] | select (.!=null)' )
+                export OG_IGNORE_PACKAGES="${ignore_packages}"
+                do_sync_packages ${project_name} ${ubuntu_series} ${packages}
                 ;;
             germinate)
                 # get additional configs
                 local germinate_url=$(echo ${src_conf} | jq -r '.url | select (.!=null)' )
-                if [ -z "${germinate_url}" ]; then
-                    echo "WARNING: ${project} type \"${project_type}\" missing required \"url\" configuration, ignoring it"
+                local germinate_lists=$(echo ${src_conf} | jq -r '."germinate-lists"[] | select (.!=null)' )
+                if [ -z "${germinate_url}" ] || [ -z "${germinate_lists}" ]; then
+                    echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"germinate-lists\" configuration, ignoring it"
                     continue
                 fi
-                do_sync_germinate_list ${project_name} ${germinate_url}
+                local ignore_packages=$(echo ${src_conf} | jq -r '."ignore-packages"[] | select (.!=null)' )
+                export OG_IGNORE_PACKAGES="${ignore_packages}"
+                do_sync_germinate_list ${project_name} ${germinate_url} ${germinate_lists}
                 ;;
             bzr)
                 # get additional configs
@@ -510,7 +610,7 @@ do_sync_code_from_snap_config() {
                     echo "WARNING: ${project} type \"${project_type}\" missing some of the required \"url\", \"branch\" configurations, ignoring it"
                     continue
                 fi
-                sync_single_bzr_branch ${project_name} ${bzr_url} ${bzr_branch}
+                do_sync_single_bzr_branch ${project_name} ${bzr_url} ${bzr_branch}
                 ;;
             *)
                 echo -e "WARNING: Unknown source type for ${project}"
@@ -536,12 +636,6 @@ sync_all_source() {
     # sync source from snap config
     do_sync_code_from_snap_config
 
-    # Sync all code from config file
-    if [[ ! -e ${SNAP_COMMON}/source.conf ]]; then
-        echo "Source configuration [${SNAP_COMMON}/source.conf] missing, skipping it"
-    else
-        source ${SNAP_COMMON}/source.conf
-    fi
     echo "Waiting for ${ACTIVE_TASKS} tasks to complete...."
     echo "${pids}"
     wait_for_task_to_finish ALL
