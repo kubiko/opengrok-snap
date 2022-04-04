@@ -337,9 +337,16 @@ parts:
             - tomcat
             - opengrok
         plugin: autotools
-        source: https://dlcdn.apache.org/tomcat/tomcat-connectors/native/1.2.31/source/tomcat-native-1.2.31-src.tar.gz
-        source-type: tar
+        source: .
         source-subdir: native
+        override-pull: |
+            tn_version="$(curl https://dlcdn.apache.org/tomcat/tomcat-connectors/native/ | sed -n -e 's/.*The latest release version is \(1\)/\1/p' | sed  's|</li>||g')"
+            curl \
+              https://dlcdn.apache.org/tomcat/tomcat-connectors/native/${tn_version}/source/tomcat-native-${tn_version}-src.tar.gz \
+              -o ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz
+            tar \
+              -xzf ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz \
+              --strip-components=1
         override-build: |
             cd ${SNAPCRAFT_PART_BUILD}/native
             [ ! -f ./configure ] && autoreconf
@@ -489,6 +496,7 @@ parts:
             - libc-shm-shim/18/beta
 
 build-packages:
+    - curl
     - libapr1-dev
     - libjansson-dev
     - libssl-dev
