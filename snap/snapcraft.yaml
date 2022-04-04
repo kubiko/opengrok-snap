@@ -419,6 +419,11 @@ parts:
                  -maxdepth 1 \
                  -type l \
                  -exec rm {} \;
+            # fix sym link out of the snap for blacklisted.certs
+            ln -sf \
+              ../../../../../../etc/java-11-openjdk/security/blacklisted.certs \
+              ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/java-*-openjdk-*/lib/security/blacklisted.certs
+            touch ${SNAPCRAFT_PART_INSTALL}/etc/java-11-openjdk/security/blacklisted.certs
         organize:
             'usr/lib/jvm/java-*-openjdk-*': usr/lib/jvm/java-openjdk
 
