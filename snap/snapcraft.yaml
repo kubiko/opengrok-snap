@@ -340,7 +340,7 @@ parts:
         source: .
         source-subdir: native
         override-pull: |
-            tn_version="$(curl https://dlcdn.apache.org/tomcat/tomcat-connectors/native/ | sed -n -e 's/.*The latest release version is \(1\)/\1/p' | sed  's|</li>||g')"
+            tn_version="$(curl -s https://dlcdn.apache.org/tomcat/tomcat-connectors/native/ | awk 'c&&!--c;/.*The latest releases.*/{c=2}' | sed -e 's/<li>//g'  -e 's/<\/li>//g')"
             curl \
               https://dlcdn.apache.org/tomcat/tomcat-connectors/native/${tn_version}/source/tomcat-native-${tn_version}-src.tar.gz \
               -o ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz
