@@ -306,6 +306,8 @@ apps:
             - removable-media
             - ssh-keys
             - mount-observe
+        environment:
+          GIT_CONFIG_NOSYSTEM: 1
 
     ssh-agent:
         command: usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
