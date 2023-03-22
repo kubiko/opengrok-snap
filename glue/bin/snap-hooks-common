@@ -41,6 +41,17 @@ else
         logger "snap.${SNAP_INSTANCE_NAME}.hook-common: fixing cssClass -> messageLevel in ${SNAP_COMMON}/scripts/sync.conf"
         sed -i 's/cssClass/messageLevel/g' ${SNAP_COMMON}/scripts/sync.conf
     fi
+
+    # fix: refresh sync.conf old syntax
+    # opengrok tools changed expected format of sync.conf when handling opengrok REST api, command -> call
+    # if default sync.conf is detected, refresh it with the new one
+    # if there is custom sync.conf, nothing, we assume user knows better...
+    if [ -z "$(grep 'args: ' ${SNAP_COMMON}/scripts/sync.conf)" ]; then
+         cp ${SNAP}/scripts/sync.conf  ${SNAP_COMMON}/scripts/
+         # copy also reference file, so we can detect in the future if user made own modifications
+         cp ${SNAP}/scripts/sync.conf  ${SNAP_COMMON}/scripts/sync.conf.back
+    fi
+
     # fix mirror-config.yml: $SNAP needs to be replaces with actual path
     if [ -n "$(grep "\${SNAP}" ${SNAP_COMMON}/etc/mirror-config.yml)" ]; then
         logger "snap.${SNAP_INSTANCE_NAME}.hook-common: replacing \${SNAP} with real path in ${SNAP_COMMON}/etc/mirror-config.yml"
