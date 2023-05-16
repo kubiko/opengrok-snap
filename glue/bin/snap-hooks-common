@@ -35,6 +35,8 @@ else
     [ -n "$(grep '\-J=\-d64' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/-J=-d64,//g' ${SNAP_COMMON}/scripts/sync.conf
     # fix for "cleanup is not a list of commands"
     [ -n "$(grep '  command' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's/  command:/  - command:/g' ${SNAP_COMMON}/scripts/sync.conf
+    # fix ctags relocation
+    [ -n "$(grep '${SNAP}/bin/ctags' ${SNAP_COMMON}/scripts/sync.conf)" ] && sed -i 's|${SNAP}/bin/ctags|${SNAP}/usr/bin/ctags|g' ${SNAP_COMMON}/scripts/sync.conf
 
     # fix for REST API change: cssClass -> messageLevel
     if [ -n "$(grep "cssClass" ${SNAP_COMMON}/scripts/sync.conf)" ]; then

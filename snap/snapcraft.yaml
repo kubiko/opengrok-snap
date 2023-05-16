@@ -482,22 +482,22 @@ parts:
 
   universal-ctags:
     plugin: autotools
-    configflags:
+    source: https://github.com/universal-ctags/ctags.git
+    autotools-configure-parameters:
       - --enable-yaml
       - --enable-xml
       - --enable-json
+      - --prefix=/usr
+      - --bindir=/usr/bin
+      - --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET}
     stage-packages:
       - libjansson4
-      - libicu60
+      - libicu70
       - libxml2
       - libyaml-0-2
-    source: https://github.com/universal-ctags/ctags.git
     override-pull: |
-      snapcraftctl pull
+      craftctl default
       git checkout $(git tag -l | sort --version-sort | tail -1)
-    override-build: |
-      ./autogen.sh
-      snapcraftctl build
 
   libc-shm-shim:
     plugin: nil
