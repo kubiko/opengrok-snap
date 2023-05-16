@@ -317,14 +317,18 @@ parts:
     source: https://github.com/apache/tomcat.git
     source-type: git
     source-branch: 10.0.x
-    ant-openjdk-version: "11"
+    source-depth: 1
     override-pull: |
-      snapcraftctl pull
+      craftctl default
       git checkout $(git tag -l | grep 10.0. | sort --version-sort | tail -1)
+    stage-packages:
+      - openjdk-17-jre-headless
     override-build: |
-      snapcraftctl build
-      cp -r output/build/* $SNAPCRAFT_PART_INSTALL
+      craftctl default
+      cp -r output/build/* ${CRAFT_PART_INSTALL}
     stage:
+      - -etc/java-*-openjdk
+      - -bin/java
       - -usr/lib/jvm
 
   apr:
@@ -518,6 +522,9 @@ parts:
     stage-snaps:
       - libc-shm-shim/18/beta
 
+build-snaps:
+  - ant
+
 build-packages:
   - curl
   - libjansson-dev
@@ -526,6 +533,7 @@ build-packages:
   - libxml2-dev
   - libxml2-utils
   - libyaml-dev
+  - openjdk-17-jdk-headless
   - pkg-config
   - python3-venv
   - python3-pip
