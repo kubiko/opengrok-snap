@@ -8,13 +8,11 @@ description: |
 confinement: strict
 grade: stable
 adopt-info: opengrok
-base: core18
+base: core22
 
 architectures:
-  - build-on: armhf
   - build-on: arm64
   - build-on: amd64
-  - build-on: i386
 
 plugs:
   source-location:
@@ -41,7 +39,7 @@ environment:
   JAVA_HOME:       "$SNAP/usr/lib/jvm/java-openjdk"
   CLASSPATH:       "$SNAP/lib:$SNAP/dist/lib:$SNAP/dist/share/lib:$SNAP/plugins"
   PATH:            "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-openjdk/bin:$SNAP/usr/lib/jvm/java-openjdk/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
-  LD_LIBRARY_PATH: "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
+  LD_LIBRARY_PATH: "${SNAP}/lib/${CRAFT_ARCH_TRIPLET}:${SNAP}/lib:${SNAP}/usr/lib:${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET}:/usr/lib/${CRAFT_ARCH_TRIPLET}"
   SNAP_SHM_PREFIX: "snap.${SNAP_INSTANCE_NAME}."
   SSH_AUTH_SOCK:   "${SNAP_DATA}/ssh-agent.socket"
 
@@ -57,7 +55,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -72,7 +69,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-config-merge
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -87,7 +83,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-deploy
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -102,7 +97,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-groups
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -117,7 +111,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-index-all
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -132,7 +125,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-indexer
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -147,7 +139,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-java
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -162,7 +153,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-mirror
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -177,7 +167,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-projadm
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -192,7 +181,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-add-project
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -207,7 +195,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-reindex-project
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -222,7 +209,6 @@ apps:
       - bin/read-settings
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-sync
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -234,11 +220,9 @@ apps:
 
   import-dpkg-list:
     command: bin/command.import-dpkg-list
-    adapter: none
 
   help:
     command: bin/snap-help
-    adapter: none
 
   tomcat:
     command-chain:
@@ -246,7 +230,6 @@ apps:
     command: bin/tomcat-control run
     stop-command: bin/tomcat-control stop -force
     daemon: simple
-    adapter: none
     plugs:
       - network-bind
       - removable-media
@@ -266,7 +249,6 @@ apps:
     command: bin/command.opengrok-sync
     daemon: simple
     timer: 00:30~01:00
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -285,7 +267,6 @@ apps:
     after:
       - tomcat
       - ssh-agent
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -299,7 +280,6 @@ apps:
     command-chain:
       - bin/read-settings
     command: bin/update-src
-    adapter: none
     plugs:
       - network-bind
       - home
@@ -312,7 +292,6 @@ apps:
   ssh-agent:
     command: usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
     daemon: simple
-    adapter: none
     plugs:
       - home
       - network-bind
