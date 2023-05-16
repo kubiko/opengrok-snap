@@ -56,12 +56,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   config-merge:
@@ -70,12 +71,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-config-merge
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   deploy:
@@ -84,12 +86,12 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-deploy
     plugs:
-      - network-bind
       - home
-      - removable-media
-      - ssh-keys
+      - log-observe
       - mount-observe
+      - network-bind
       - process-control
+      - removable-media
       - system-observe
 
   groups:
@@ -98,12 +100,12 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-groups
     plugs:
-      - network-bind
       - home
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   index-all:
@@ -112,12 +114,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-index-all
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   indexer:
@@ -126,12 +129,12 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-indexer
     plugs:
-      - network-bind
       - home
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   java:
@@ -140,12 +143,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-java
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   mirror:
@@ -154,12 +158,12 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-mirror
     plugs:
-      - network-bind
       - home
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   projadm:
@@ -168,12 +172,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-projadm
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   add-project:
@@ -182,12 +187,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-add-project
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   reindex-project:
@@ -196,12 +202,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-reindex-project
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   sync:
@@ -210,12 +217,13 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-sync
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   import-dpkg-list:
@@ -231,9 +239,11 @@ apps:
     stop-command: bin/tomcat-control stop -force
     daemon: simple
     plugs:
-      - network-bind
+      - process-control
       - removable-media
+      - system-observe
       - mount-observe
+      - network-bind
     environment:
       # installation pathes are based of CATALINA_HOME
       CATALINA_HOME: $SNAP
@@ -250,12 +260,13 @@ apps:
     daemon: simple
     timer: 00:30~01:00
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   rebuild-index-helper:
@@ -268,12 +279,13 @@ apps:
       - tomcat
       - ssh-agent
     plugs:
-      - network-bind
       - home
+      - log-observe
+      - mount-observe
+      - network-bind
+      - process-control
       - removable-media
       - ssh-keys
-      - mount-observe
-      - process-control
       - system-observe
 
   update-source:
@@ -281,11 +293,11 @@ apps:
       - bin/read-settings
     command: bin/update-src
     plugs:
-      - network-bind
       - home
+      - mount-observe
+      - network-bind
       - removable-media
       - ssh-keys
-      - mount-observe
     environment:
       GIT_CONFIG_NOSYSTEM: 1
 
