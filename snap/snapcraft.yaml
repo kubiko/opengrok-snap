@@ -275,6 +275,7 @@ apps:
       - opengrok-tools/bin/activate-exec
     command: bin/command.opengrok-rebuild-index
     daemon: simple
+    install-mode: disable
     after:
       - tomcat
       - ssh-agent
