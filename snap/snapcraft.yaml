@@ -357,7 +357,6 @@ parts:
     after:
       - apr
       - tomcat
-      - opengrok
     plugin: autotools
     source: .
     source-subdir: native
@@ -366,30 +365,34 @@ parts:
       tn_version="1.2."
       # ignore dereferenced tags
       latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
-      git clone \
-        --depth 1 \
-        ${repo} \
-        -b ${latest_tag} \
-        ${SNAPCRAFT_PART_SRC}
+      # if do not re-pull if already cloned
+      if [ ! -e ${CRAFT_PART_SRC}/.git ]; then
+        git clone \
+            --depth 1 \
+            ${repo} \
+            -b ${latest_tag} \
+            ${CRAFT_PART_SRC}
+      fi
     override-build: |
-      cd ${SNAPCRAFT_PART_BUILD}/native
-      CATALINA_HOME="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
+      cd ${CRAFT_PART_BUILD}/native
+      CATALINA_HOME="/snap/${CRAFT_PROJECT_NAME}/current"
       JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
       # tomcat-native is funny and reuires active apr build directory
-      apr_dir=$(realpath ${PWD}/../../../apr/build)
+      apr_dir=${CRAFT_PART_BUILD}/../../apr/build
       sh buildconf --with-apr=${apr_dir}
       ./configure \
         --with-apr=${apr_dir} \
         --with-java-home=${JAVA_HOME} \
         --with-ssl=yes \
         --prefix=${CATALINA_HOME} \
-        --libdir=/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
+        --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET}
       make && make install DESTDIR=${SNAPCRAFT_PART_INSTALL}
     stage-packages:
-      - libssl1.1
+      - libssl3
     stage:
-      - -lib/*/libtcnative*.a
-      - -lib/*/libtcnative*.la
+      - -usr/lib/*/*.a
+      - -usr/lib/*/*.la
+      - -usr/share
 
   opengrok:
     plugin: maven
