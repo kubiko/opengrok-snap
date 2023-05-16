@@ -4,6 +4,3 @@ logger "snap.${SNAP_INSTANCE_NAME}.hook.$(basename $0): entering the hook"
 
 # run common part of the hook
 ${SNAP}/bin/snap-hooks-common
-
-# disable reindex helper service
-snapctl stop --disable ${SNAP_INSTANCE_NAME}.rebuild-index-helper
