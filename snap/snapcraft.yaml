@@ -394,6 +394,12 @@ parts:
       - -usr/lib/*/*.la
       - -usr/share
 
+  maven-deps:
+    plugin: dump
+    source: https://archive.apache.org/dist/maven/maven-3/3.9.1/binaries/apache-maven-3.9.1-bin.tar.gz
+    prime:
+      - -*
+
   opengrok:
     plugin: maven
     source: https://github.com/OpenGrok/OpenGrok.git
