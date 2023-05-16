@@ -545,7 +545,7 @@ parts:
   libc-shm-shim:
     plugin: nil
     stage-snaps:
-      - libc-shm-shim/18/beta
+      - libc-shm-shim/22/beta
 
 build-snaps:
   - ant
