@@ -342,13 +342,15 @@ parts:
     source: .
     source-subdir: native
     override-pull: |
-      tn_version="$(curl -s https://dlcdn.apache.org/tomcat/tomcat-connectors/native/ | awk 'c&&!--c;/.*The latest releases.*/{c=2}' | sed -e 's/<li>//g'  -e 's/<\/li>//g')"
-      curl \
-        https://dlcdn.apache.org/tomcat/tomcat-connectors/native/${tn_version}/source/tomcat-native-${tn_version}-src.tar.gz \
-        -o ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz
-      tar \
-        -xzf ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz \
-        --strip-components=1
+      repo="https://github.com/apache/tomcat-native.git"
+      tn_version="1.2."
+      # ignore dereferenced tags
+      latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /\^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
+      git clone \
+        --depth 1 \
+        ${repo} \
+        -b ${latest_tag} \
+        ${SNAPCRAFT_PART_SRC}
     override-build: |
       cd ${SNAPCRAFT_PART_BUILD}/native
       [ ! -f ./configure ] && autoreconf
