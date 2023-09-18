@@ -11,10 +11,10 @@ adopt-info: opengrok
 base: core18
 
 architectures:
-    - build-on: armhf
-    - build-on: arm64
-    - build-on: amd64
-    - build-on: i386
+  - build-on: armhf
+  - build-on: arm64
+  - build-on: amd64
+  - build-on: i386
 
 plugs:
   source-location:
@@ -38,474 +38,474 @@ slots:
       - $SNAP/usr
 
 environment:
-    JAVA_HOME:        "$SNAP/usr/lib/jvm/java-openjdk"
-    CLASSPATH:        "$SNAP/lib:$SNAP/dist/lib:$SNAP/dist/share/lib:$SNAP/plugins"
-    PATH:             "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-openjdk/bin:$SNAP/usr/lib/jvm/java-openjdk/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
-    LD_LIBRARY_PATH:  "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
-    SNAP_SHM_PREFIX:  "snap.${SNAP_INSTANCE_NAME}."
-    SSH_AUTH_SOCK:    "${SNAP_DATA}/ssh-agent.socket"
+  JAVA_HOME:       "$SNAP/usr/lib/jvm/java-openjdk"
+  CLASSPATH:       "$SNAP/lib:$SNAP/dist/lib:$SNAP/dist/share/lib:$SNAP/plugins"
+  PATH:            "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-openjdk/bin:$SNAP/usr/lib/jvm/java-openjdk/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
+  LD_LIBRARY_PATH: "$SNAP/lib/${SNAPCRAFT_ARCH_TRIPLET}:$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH:$SNAP/lib:$SNAP/usr/lib:$SNAP/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}"
+  SNAP_SHM_PREFIX: "snap.${SNAP_INSTANCE_NAME}."
+  SSH_AUTH_SOCK:   "${SNAP_DATA}/ssh-agent.socket"
 
 layout:
-    /usr/lib/git-core:
-        bind: $SNAP/usr/lib/git-core
-    /usr/share/git-core:
-        bind: $SNAP/usr/share/git-core
+  /usr/lib/git-core:
+    bind: $SNAP/usr/lib/git-core
+  /usr/share/git-core:
+    bind: $SNAP/usr/share/git-core
 
 apps:
-    opengrok:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  opengrok:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    config-merge:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-config-merge
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  config-merge:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-config-merge
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    deploy:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-deploy
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  deploy:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-deploy
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    groups:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-groups
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  groups:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-groups
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    index-all:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-index-all
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  index-all:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-index-all
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    indexer:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-indexer
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  indexer:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-indexer
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    java:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-java
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  java:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-java
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    mirror:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-mirror
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  mirror:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-mirror
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    projadm:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-projadm
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  projadm:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-projadm
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    add-project:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-add-project
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  add-project:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-add-project
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    reindex-project:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-reindex-project
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  reindex-project:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-reindex-project
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    sync:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-sync
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  sync:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-sync
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    import-dpkg-list:
-        command: bin/command.import-dpkg-list
-        adapter: none
+  import-dpkg-list:
+    command: bin/command.import-dpkg-list
+    adapter: none
 
-    help:
-       command: bin/snap-help
-       adapter: none
+  help:
+    command: bin/snap-help
+    adapter: none
 
-    tomcat:
-        command-chain:
-            - bin/read-settings
-        command: bin/tomcat-control run
-        stop-command: bin/tomcat-control stop -force
-        daemon: simple
-        adapter: none
-        plugs:
-            - network-bind
-            - removable-media
-            - mount-observe
-        environment:
-            # installation pathes are based of CATALINA_HOME
-            CATALINA_HOME: $SNAP
-            # writable pathes are based of CATALINA_BASE
-            CATALINA_BASE:   $SNAP_COMMON
-            CATALINA_PID:    ${SNAP_DATA}/tomcat.pid
-            CATALINA_TMPDIR: /tmp
+  tomcat:
+    command-chain:
+      - bin/read-settings
+    command: bin/tomcat-control run
+    stop-command: bin/tomcat-control stop -force
+    daemon: simple
+    adapter: none
+    plugs:
+      - network-bind
+      - removable-media
+      - mount-observe
+    environment:
+      # installation pathes are based of CATALINA_HOME
+      CATALINA_HOME: $SNAP
+      # writable pathes are based of CATALINA_BASE
+      CATALINA_BASE:   $SNAP_COMMON
+      CATALINA_PID:  ${SNAP_DATA}/tomcat.pid
+      CATALINA_TMPDIR: /tmp
 
-    index-sync-daemon:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-sync
-        daemon: simple
-        timer: 00:30~01:00
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  index-sync-daemon:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-sync
+    daemon: simple
+    timer: 00:30~01:00
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    rebuild-index-helper:
-        command-chain:
-            - bin/read-settings
-            - opengrok-tools/bin/activate-exec
-        command: bin/command.opengrok-rebuild-index
-        daemon: simple
-        after:
-            - tomcat
-            - ssh-agent
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-            - process-control
-            - system-observe
+  rebuild-index-helper:
+    command-chain:
+      - bin/read-settings
+      - opengrok-tools/bin/activate-exec
+    command: bin/command.opengrok-rebuild-index
+    daemon: simple
+    after:
+      - tomcat
+      - ssh-agent
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+      - process-control
+      - system-observe
 
-    update-source:
-        command-chain:
-            - bin/read-settings
-        command: bin/update-src
-        adapter: none
-        plugs:
-            - network-bind
-            - home
-            - removable-media
-            - ssh-keys
-            - mount-observe
-        environment:
-          GIT_CONFIG_NOSYSTEM: 1
+  update-source:
+    command-chain:
+      - bin/read-settings
+    command: bin/update-src
+    adapter: none
+    plugs:
+      - network-bind
+      - home
+      - removable-media
+      - ssh-keys
+      - mount-observe
+    environment:
+      GIT_CONFIG_NOSYSTEM: 1
 
-    ssh-agent:
-        command: usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
-        daemon: simple
-        adapter: none
-        plugs:
-            - home
-            - network-bind
-            - ssh-keys
+  ssh-agent:
+    command: usr/bin/ssh-agent -D -a $SSH_AUTH_SOCK
+    daemon: simple
+    adapter: none
+    plugs:
+      - home
+      - network-bind
+      - ssh-keys
 
 parts:
-    tomcat:
-        plugin: ant
-        source: https://github.com/apache/tomcat.git
-        source-type: git
-        source-branch: 10.0.x
-        ant-openjdk-version: "11"
-        override-pull: |
-            snapcraftctl pull
-            git checkout $(git tag -l | grep 10.0. | sort --version-sort | tail -1)
-        override-build: |
-            snapcraftctl build
-            cp -r output/build/* $SNAPCRAFT_PART_INSTALL
-        stage:
-            - -usr/lib/jvm
+  tomcat:
+    plugin: ant
+    source: https://github.com/apache/tomcat.git
+    source-type: git
+    source-branch: 10.0.x
+    ant-openjdk-version: "11"
+    override-pull: |
+      snapcraftctl pull
+      git checkout $(git tag -l | grep 10.0. | sort --version-sort | tail -1)
+    override-build: |
+      snapcraftctl build
+      cp -r output/build/* $SNAPCRAFT_PART_INSTALL
+    stage:
+      - -usr/lib/jvm
 
-    tomcat-native:
-        after:
-            - tomcat
-            - opengrok
-        plugin: autotools
-        source: .
-        source-subdir: native
-        override-pull: |
-            tn_version="$(curl -s https://dlcdn.apache.org/tomcat/tomcat-connectors/native/ | awk 'c&&!--c;/.*The latest releases.*/{c=2}' | sed -e 's/<li>//g'  -e 's/<\/li>//g')"
-            curl \
-              https://dlcdn.apache.org/tomcat/tomcat-connectors/native/${tn_version}/source/tomcat-native-${tn_version}-src.tar.gz \
-              -o ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz
-            tar \
-              -xzf ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz \
-              --strip-components=1
-        override-build: |
-            cd ${SNAPCRAFT_PART_BUILD}/native
-            [ ! -f ./configure ] && autoreconf
-            CATALINA_HOME="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
-            JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
-            ./configure \
-              --with-apr=/usr/bin/apr-1-config \
-              --with-java-home=${JAVA_HOME} \
-              --with-ssl=yes \
-              --prefix=${CATALINA_HOME} \
-              --libdir=/lib/${SNAPCRAFT_ARCH_TRIPLET}
-            make && make install DESTDIR=${SNAPCRAFT_PART_INSTALL}
-        stage-packages:
-            - libapr1
-            - libssl1.1
-        stage:
-            - -lib/*/libtcnative*.a
-            - -lib/*/libtcnative*.la
+  tomcat-native:
+    after:
+      - tomcat
+      - opengrok
+    plugin: autotools
+    source: .
+    source-subdir: native
+    override-pull: |
+      tn_version="$(curl -s https://dlcdn.apache.org/tomcat/tomcat-connectors/native/ | awk 'c&&!--c;/.*The latest releases.*/{c=2}' | sed -e 's/<li>//g'  -e 's/<\/li>//g')"
+      curl \
+        https://dlcdn.apache.org/tomcat/tomcat-connectors/native/${tn_version}/source/tomcat-native-${tn_version}-src.tar.gz \
+        -o ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz
+      tar \
+        -xzf ${SNAPCRAFT_PART_SRC}/tomcat-native-src.tar.gz \
+        --strip-components=1
+    override-build: |
+      cd ${SNAPCRAFT_PART_BUILD}/native
+      [ ! -f ./configure ] && autoreconf
+      CATALINA_HOME="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
+      JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+      ./configure \
+        --with-apr=/usr/bin/apr-1-config \
+        --with-java-home=${JAVA_HOME} \
+        --with-ssl=yes \
+        --prefix=${CATALINA_HOME} \
+        --libdir=/lib/${SNAPCRAFT_ARCH_TRIPLET}
+      make && make install DESTDIR=${SNAPCRAFT_PART_INSTALL}
+    stage-packages:
+      - libapr1
+      - libssl1.1
+    stage:
+      - -lib/*/libtcnative*.a
+      - -lib/*/libtcnative*.la
 
-    opengrok:
-        plugin: maven
-        source: https://github.com/OpenGrok/OpenGrok.git
-        source-type: git
-        source-branch: master
-        maven-openjdk-version: "11"
-        maven-options:
-            - -DskipTests=true
-            - -Dmaven.javadoc.skip=false
-            - -B
-            - -V
-        maven-targets:
-            - plugins
-        override-pull: |
-            snapcraftctl pull
-            # decide if to build master or release(tag)
-            last_released_tag="$(snap info opengrok | awk '$1 == "latest/beta:" { print $2 }')"
-            last_commited_tag=$(git describe --abbrev=0 --tags)
-            # If the latest tag from the upstream project has not been released to
-            # beta, build that tag instead of master.
-            if [ "${last_commited_tag}" != "${last_released_tag}" ]; then
-                git checkout ${last_commited_tag}
-                snapcraftctl set-version ${last_commited_tag}
-            else
-                snapcraftctl set-version $(git describe --tags)
-            fi
-        override-build: |
-            snapcraftctl build
-            echo "opengrok built successfully"
-            mkdir -p ${SNAPCRAFT_PART_INSTALL}/dist ${SNAPCRAFT_PART_INSTALL}/src-updater
-            tar -xf distribution/target/opengrok-*.tar.gz -C ${SNAPCRAFT_PART_INSTALL}/dist/ --strip-components=1
-            sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = ${SNAP_COMMON}/logs/#g' \
-                ${SNAPCRAFT_PART_INSTALL}/dist/doc/logging.properties
-            # install opengrok-tools
-            cd ${SNAPCRAFT_PART_INSTALL}
-            python3 -m venv opengrok-tools
-            cd opengrok-tools
-            bin/python3 \
-              -m pip install \
-              --no-cache-dir \
-              ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
-            ln -sf ../../usr/bin/python3 bin/python3
-            sed -i \
-              -e 's|VIRTUAL_ENV=\".*|VIRTUAL_ENV=\"${SNAP}/opengrok-tools\"|g' \
-              -e 's|VIRTUAL_ENV \".*|VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' \
-              ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.*
-            # create active snap chain command
-            cp ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate \
-               ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
-            chmod +x ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
-            echo "\nexec \"\$@\"" >> \
-               ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
-            find ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin \
-              -type f \
-              -exec sed -i 's|#!.*/parts/opengrok/install/opengrok-tools/bin/python3|#!/snap/'"${SNAPCRAFT_PROJECT_NAME}"'/current/opengrok-tools/bin/python3|g' {} \;
-            # clean sym link, so we can use organize feature without worry for collision
-            find ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/ \
-                 -maxdepth 1 \
-                 -type l \
-                 -exec rm {} \;
-            # fix sym link out of the snap for blacklisted.certs
-            ln -sf \
-              ../../../../../../etc/java-11-openjdk/security/blacklisted.certs \
-              ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/java-*-openjdk-*/lib/security/blacklisted.certs
-            touch ${SNAPCRAFT_PART_INSTALL}/etc/java-11-openjdk/security/blacklisted.certs
-        organize:
-            'usr/lib/jvm/java-*-openjdk-*': usr/lib/jvm/java-openjdk
+  opengrok:
+    plugin: maven
+    source: https://github.com/OpenGrok/OpenGrok.git
+    source-type: git
+    source-branch: master
+    maven-openjdk-version: "11"
+    maven-options:
+      - -DskipTests=true
+      - -Dmaven.javadoc.skip=false
+      - -B
+      - -V
+    maven-targets:
+      - plugins
+    override-pull: |
+      snapcraftctl pull
+      # decide if to build master or release(tag)
+      last_released_tag="$(snap info opengrok | awk '$1 == "latest/beta:" { print $2 }')"
+      last_commited_tag=$(git describe --abbrev=0 --tags)
+      # If the latest tag from the upstream project has not been released to
+      # beta, build that tag instead of master.
+      if [ "${last_commited_tag}" != "${last_released_tag}" ]; then
+        git checkout ${last_commited_tag}
+        snapcraftctl set-version ${last_commited_tag}
+      else
+        snapcraftctl set-version $(git describe --tags)
+      fi
+    override-build: |
+      snapcraftctl build
+      echo "opengrok built successfully"
+      mkdir -p ${SNAPCRAFT_PART_INSTALL}/dist ${SNAPCRAFT_PART_INSTALL}/src-updater
+      tar -xf distribution/target/opengrok-*.tar.gz -C ${SNAPCRAFT_PART_INSTALL}/dist/ --strip-components=1
+      sed -i 's#java.util.logging.FileHandler.pattern = #java.util.logging.FileHandler.pattern = ${SNAP_COMMON}/logs/#g' \
+        ${SNAPCRAFT_PART_INSTALL}/dist/doc/logging.properties
+      # install opengrok-tools
+      cd ${SNAPCRAFT_PART_INSTALL}
+      python3 -m venv opengrok-tools
+      cd opengrok-tools
+      bin/python3 \
+        -m pip install \
+        --no-cache-dir \
+        ${SNAPCRAFT_PART_INSTALL}/dist/tools/opengrok-tools.tar.gz
+      ln -sf ../../usr/bin/python3 bin/python3
+      sed -i \
+        -e 's|VIRTUAL_ENV=\".*|VIRTUAL_ENV=\"${SNAP}/opengrok-tools\"|g' \
+        -e 's|VIRTUAL_ENV \".*|VIRTUAL_ENV \"${SNAP}/opengrok-tools\"|g' \
+        ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate.*
+      # create active snap chain command
+      cp ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate \
+         ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
+      chmod +x ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
+      echo "\nexec \"\$@\"" >> \
+         ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin/activate-exec
+      find ${SNAPCRAFT_PART_INSTALL}/opengrok-tools/bin \
+        -type f \
+        -exec sed -i 's|#!.*/parts/opengrok/install/opengrok-tools/bin/python3|#!/snap/'"${SNAPCRAFT_PROJECT_NAME}"'/current/opengrok-tools/bin/python3|g' {} \;
+      # clean sym link, so we can use organize feature without worry for collision
+      find ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/ \
+         -maxdepth 1 \
+         -type l \
+         -exec rm {} \;
+      # fix sym link out of the snap for blacklisted.certs
+      ln -sf \
+        ../../../../../../etc/java-11-openjdk/security/blacklisted.certs \
+        ${SNAPCRAFT_PART_INSTALL}/usr/lib/jvm/java-*-openjdk-*/lib/security/blacklisted.certs
+      touch ${SNAPCRAFT_PART_INSTALL}/etc/java-11-openjdk/security/blacklisted.certs
+    organize:
+      'usr/lib/jvm/java-*-openjdk-*': usr/lib/jvm/java-openjdk
 
-    # source control tools
-    tools:
-        plugin: nil
-        stage-packages:
-            - bzr
-            - coreutils
-            - cssc
-            - cvs
-            - curl
-            - git
-            - gitk
-            - jq
-            - libgnome-keyring0
-            - libkdecore5
-            - libkdeui5
-            - libqtcore4
-            - monotone
-            - mercurial
-            - openssh-client
-            - procps
-            - pxz
-            - python3
-            - python3-apt
-            - python3-distutils
-            - rcs
-            - subversion
-            - wget
-            - xz-utils
-        organize:
-            usr/share/bash-completion/completions/git: git-completion.bash
-            usr/bin/bzr.bzr: /usr/bin/bzr
+  # source control tools
+  tools:
+    plugin: nil
+    stage-packages:
+      - bzr
+      - coreutils
+      - cssc
+      - cvs
+      - curl
+      - git
+      - gitk
+      - jq
+      - libgnome-keyring0
+      - libkdecore5
+      - libkdeui5
+      - libqtcore4
+      - monotone
+      - mercurial
+      - openssh-client
+      - procps
+      - pxz
+      - python3
+      - python3-apt
+      - python3-distutils
+      - rcs
+      - subversion
+      - wget
+      - xz-utils
+    organize:
+      usr/share/bash-completion/completions/git: git-completion.bash
+      usr/bin/bzr.bzr: /usr/bin/bzr
 
-    # helper scripts
-    glue:
-        source: glue
-        plugin: dump
+  # helper scripts
+  glue:
+    source: glue
+    plugin: dump
 
-    universal-ctags:
-        plugin: autotools
-        configflags:
-            - --enable-yaml
-            - --enable-xml
-            - --enable-json
-        stage-packages:
-            - libjansson4
-            - libicu60
-            - libxml2
-            - libyaml-0-2
-        source: https://github.com/universal-ctags/ctags.git
-        override-pull: |
-            snapcraftctl pull
-            git checkout $(git tag -l | sort --version-sort | tail -1)
-        override-build: |
-            ./autogen.sh
-            snapcraftctl build
+  universal-ctags:
+    plugin: autotools
+    configflags:
+      - --enable-yaml
+      - --enable-xml
+      - --enable-json
+    stage-packages:
+      - libjansson4
+      - libicu60
+      - libxml2
+      - libyaml-0-2
+    source: https://github.com/universal-ctags/ctags.git
+    override-pull: |
+      snapcraftctl pull
+      git checkout $(git tag -l | sort --version-sort | tail -1)
+    override-build: |
+      ./autogen.sh
+      snapcraftctl build
 
-    libc-shm-shim:
-        plugin: nil
-        stage-snaps:
-            - libc-shm-shim/18/beta
+  libc-shm-shim:
+    plugin: nil
+    stage-snaps:
+      - libc-shm-shim/18/beta
 
 build-packages:
-    - curl
-    - libapr1-dev
-    - libjansson-dev
-    - libssl-dev
-    - libxml2-dev
-    - libxml2-utils
-    - libyaml-dev
-    - pkg-config
-    - python3-venv
-    - python3-pip
-    - xmlstarlet
+  - curl
+  - libapr1-dev
+  - libjansson-dev
+  - libssl-dev
+  - libxml2-dev
+  - libxml2-utils
+  - libyaml-dev
+  - pkg-config
+  - python3-venv
+  - python3-pip
+  - xmlstarlet
