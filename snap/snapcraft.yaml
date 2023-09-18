@@ -334,8 +334,31 @@ parts:
     stage:
       - -usr/lib/jvm
 
+  apr:
+    plugin: autotools
+    source: https://github.com/apache/apr.git
+    configflags:
+      - --bindir=/usr/bin
+      - --includedir=/usr/include
+      - --libdir=/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
+      - --with-installbuilddir=/usr/share/apr-1.0/build
+    override-pull: |
+      snapcraftctl pull
+      # ignore test and rc tags
+      latest_tag=$(git tag -l 1.7* | grep --invert-match -e "\-rc" -e "\-test"  | sort -V | tail -1)
+      git checkout ${latest_tag}
+    override-build: |
+      touch libtoolT
+      ./buildconf
+      snapcraftctl build
+    prime:
+      - -usr/include
+      - -usr/lib/*/libapr-1*.a
+      - -usr/lib/*/libapr-1*.la
+
   tomcat-native:
     after:
+      - apr
       - tomcat
       - opengrok
     plugin: autotools
@@ -345,7 +368,7 @@ parts:
       repo="https://github.com/apache/tomcat-native.git"
       tn_version="1.2."
       # ignore dereferenced tags
-      latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /\^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
+      latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
       git clone \
         --depth 1 \
         ${repo} \
@@ -353,18 +376,19 @@ parts:
         ${SNAPCRAFT_PART_SRC}
     override-build: |
       cd ${SNAPCRAFT_PART_BUILD}/native
-      [ ! -f ./configure ] && autoreconf
       CATALINA_HOME="/snap/${SNAPCRAFT_PROJECT_NAME}/current"
       JAVA_HOME=$(dirname $(dirname $(readlink -f $(which javac))))
+      # tomcat-native is funny and reuires active apr build directory
+      apr_dir=$(realpath ${PWD}/../../../apr/build)
+      sh buildconf --with-apr=${apr_dir}
       ./configure \
-        --with-apr=/usr/bin/apr-1-config \
+        --with-apr=${apr_dir} \
         --with-java-home=${JAVA_HOME} \
         --with-ssl=yes \
         --prefix=${CATALINA_HOME} \
-        --libdir=/lib/${SNAPCRAFT_ARCH_TRIPLET}
+        --libdir=/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
       make && make install DESTDIR=${SNAPCRAFT_PART_INSTALL}
     stage-packages:
-      - libapr1
       - libssl1.1
     stage:
       - -lib/*/libtcnative*.a
@@ -469,6 +493,8 @@ parts:
     organize:
       usr/share/bash-completion/completions/git: git-completion.bash
       usr/bin/bzr.bzr: /usr/bin/bzr
+    stage:
+      - -usr/lib/*/libapr-1.*
 
   # helper scripts
   glue:
@@ -501,13 +527,14 @@ parts:
 
 build-packages:
   - curl
-  - libapr1-dev
   - libjansson-dev
   - libssl-dev
+  - libtool-bin
   - libxml2-dev
   - libxml2-utils
   - libyaml-dev
   - pkg-config
   - python3-venv
   - python3-pip
+  - shtool
   - xmlstarlet
