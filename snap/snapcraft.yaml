@@ -400,6 +400,23 @@ parts:
     prime:
       - -*
 
+  jre:
+    plugin: nil
+    stage-packages:
+      - openjdk-17-jre-headless
+    override-build: |
+      # clean sym link, so we can use organize feature without worry for collision
+      find ${CRAFT_PART_INSTALL}/usr/lib/jvm/ \
+           -maxdepth 1 \
+           -type l \
+           -exec rm {} \;
+      # fix symbolic link to match moved jvm
+      mkdir -p ${CRAFT_PART_INSTALL}/bin
+      ln -sf ../usr/lib/jvm/java-17-openjdk/bin/java \
+             ${CRAFT_PART_INSTALL}/bin/java
+    organize:
+      'usr/lib/jvm/java-*-openjdk-*': usr/lib/jvm/java-openjdk
+
   opengrok:
     plugin: maven
     source: https://github.com/OpenGrok/OpenGrok.git
