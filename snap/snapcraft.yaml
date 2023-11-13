@@ -333,10 +333,10 @@ parts:
   apr:
     plugin: autotools
     source: https://github.com/apache/apr.git
-    configflags:
+    autotools-configure-parameters:
       - --bindir=/usr/bin
       - --includedir=/usr/include
-      - --libdir=/usr/lib/${SNAPCRAFT_ARCH_TRIPLET}
+      - --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET}
       - --with-installbuilddir=/usr/share/apr-1.0/build
     override-pull: |
       snapcraftctl pull
