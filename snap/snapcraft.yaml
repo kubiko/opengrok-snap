@@ -323,6 +323,22 @@ parts:
     stage-packages:
       - openjdk-17-jre-headless
     override-build: |
+      # setup proxy, until snapcraft supports it, we only support host and port options
+      if [ -n "${http_proxy:-}" ] && [ -n "${https_proxy:-}" ]; then
+        ant_opts=""
+        for scheme in http https
+        do
+          url=$(eval echo "\$${scheme}_proxy")
+          protocol=$(echo "${url}" | grep "://" | sed -e's,^\(.*://\).*,\1,g')
+          url_no_protocol=$(echo "${url/$protocol/}")
+          hostport=${url_no_protocol%/}
+          host=$(echo "$hostport" | cut -d":" -f1)
+          port=$(echo "$hostport" | grep ":" | cut -d":" -f2)
+          [ -n "${host}" ] && ant_opts="-D${scheme}.proxyHost=${host} ${ant_opts}"
+          [ -n "${port}" ] && ant_opts="-D${scheme}.proxyPort=${port} ${ant_opts}"
+        done
+        export ANT_OPTS="${ant_opts}"
+      fi
       craftctl default
       cp -r output/build/* ${CRAFT_PART_INSTALL}
     stage:
