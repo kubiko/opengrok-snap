@@ -323,23 +323,10 @@ parts:
       git checkout $(git tag -l | grep 10.0. | sort --version-sort | tail -1)
     stage-packages:
       - openjdk-17-jre-headless
-    override-build: |
+    build-environment:
       # setup proxy, until snapcraft supports it, we only support host and port options
-      if [ -n "${http_proxy:-}" ] && [ -n "${https_proxy:-}" ]; then
-        ant_opts=""
-        for scheme in http https
-        do
-          url=$(eval echo "\$${scheme}_proxy")
-          protocol=$(echo "${url}" | grep "://" | sed -e's,^\(.*://\).*,\1,g')
-          url_no_protocol=$(echo "${url/$protocol/}")
-          hostport=${url_no_protocol%/}
-          host=$(echo "$hostport" | cut -d":" -f1)
-          port=$(echo "$hostport" | grep ":" | cut -d":" -f2)
-          [ -n "${host}" ] && ant_opts="-D${scheme}.proxyHost=${host} ${ant_opts}"
-          [ -n "${port}" ] && ant_opts="-D${scheme}.proxyPort=${port} ${ant_opts}"
-        done
-        export ANT_OPTS="${ant_opts}"
-      fi
+      - ANT_OPTS: "-Dhttps.proxyPort=8222 -Dhttps.proxyHost=10.10.10.1 -Dhttp.proxyPort=8222 -Dhttp.proxyHost=10.10.10.1"
+    override-build: |
       craftctl default
       cp -r output/build/* ${CRAFT_PART_INSTALL}
     stage:
