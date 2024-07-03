@@ -315,11 +315,11 @@ parts:
     plugin: ant
     source: https://github.com/apache/tomcat.git
     source-type: git
-    source-branch: 10.0.x
+    source-branch: 10.1.x
     source-depth: 1
     override-pull: |
       craftctl default
-      git checkout $(git tag -l | grep 10.0. | sort --version-sort | tail -1)
+      git checkout $(git tag -l | grep 10.1. | sort --version-sort | tail -1)
     stage-packages:
       - openjdk-17-jre-headless
     override-build: |
@@ -377,7 +377,7 @@ parts:
     source-subdir: native
     override-pull: |
       repo="https://github.com/apache/tomcat-native.git"
-      tn_version="1.2."
+      tn_version="1.3."
       # ignore dereferenced tags
       latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
       # if do not re-pull if already cloned
