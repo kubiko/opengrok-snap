@@ -8,11 +8,11 @@ description: |
 confinement: strict
 grade: stable
 adopt-info: opengrok
-base: core22
+base: core24
 
-architectures:
-  - build-on: arm64
-  - build-on: amd64
+platforms:
+    arm64:
+    amd64:
 
 plugs:
   source-location:
@@ -39,7 +39,7 @@ environment:
   JAVA_HOME:       "$SNAP/usr/lib/jvm/java-openjdk"
   CLASSPATH:       "$SNAP/lib:$SNAP/dist/lib:$SNAP/dist/share/lib:$SNAP/plugins"
   PATH:            "$SNAP/usr/sbin:$SNAP/usr/bin:$SNAP/sbin:$SNAP/bin:$SNAP/usr/lib/jvm/java-openjdk/bin:$SNAP/usr/lib/jvm/java-openjdk/jre/bin:$SNAP/opengrok-tools/bin:$PATH"
-  LD_LIBRARY_PATH: "${SNAP}/lib/${CRAFT_ARCH_TRIPLET}:${SNAP}/lib:${SNAP}/usr/lib:${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET}:/usr/lib/${CRAFT_ARCH_TRIPLET}"
+  LD_LIBRARY_PATH: "${SNAP}/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:${SNAP}/lib:${SNAP}/usr/lib:${SNAP}/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}:/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}"
   SNAP_SHM_PREFIX: "snap.${SNAP_INSTANCE_NAME}."
   SSH_AUTH_SOCK:   "${SNAP_DATA}/ssh-agent.socket"
 
@@ -316,12 +316,11 @@ parts:
     source: https://github.com/apache/tomcat.git
     source-type: git
     source-branch: 10.1.x
-    source-depth: 1
     override-pull: |
       craftctl default
-      git checkout $(git tag -l | grep 10.1. | sort --version-sort | tail -1)
+      git checkout $(git tag -l | grep "10.1." | sort --version-sort | tail -1)
     stage-packages:
-      - openjdk-17-jre-headless
+      - openjdk-21-jre-headless
     override-build: |
       # setup proxy, until snapcraft supports it, we only support host and port options
       if [ -n "${http_proxy:-}" ] && [ -n "${https_proxy:-}" ]; then
@@ -352,7 +351,7 @@ parts:
     autotools-configure-parameters:
       - --bindir=/usr/bin
       - --includedir=/usr/include
-      - --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET}
+      - --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}
       - --with-installbuilddir=/usr/share/apr-1.0/build
     override-pull: |
       snapcraftctl pull
@@ -377,7 +376,7 @@ parts:
     source-subdir: native
     override-pull: |
       repo="https://github.com/apache/tomcat-native.git"
-      tn_version="1.3."
+      tn_version="2.0."
       # ignore dereferenced tags
       latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
       # if do not re-pull if already cloned
@@ -398,9 +397,8 @@ parts:
       ./configure \
         --with-apr=${apr_dir} \
         --with-java-home=${JAVA_HOME} \
-        --with-ssl=yes \
         --prefix=${CATALINA_HOME} \
-        --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET}
+        --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}
       make && make install DESTDIR=${SNAPCRAFT_PART_INSTALL}
     stage-packages:
       - libssl3
@@ -418,7 +416,7 @@ parts:
   jre:
     plugin: nil
     stage-packages:
-      - openjdk-17-jre-headless
+      - openjdk-21-jre-headless
     override-build: |
       # clean sym link, so we can use organize feature without worry for collision
       find ${CRAFT_PART_INSTALL}/usr/lib/jvm/ \
@@ -427,7 +425,7 @@ parts:
            -exec rm {} \;
       # fix symbolic link to match moved jvm
       mkdir -p ${CRAFT_PART_INSTALL}/bin
-      ln -sf ../usr/lib/jvm/java-17-openjdk/bin/java \
+      ln -sf ../usr/lib/jvm/java-21-openjdk/bin/java \
              ${CRAFT_PART_INSTALL}/bin/java
     organize:
       'usr/lib/jvm/java-*-openjdk-*': usr/lib/jvm/java-openjdk
@@ -503,7 +501,7 @@ parts:
       - procps
       - python3
       - python3-apt
-      - python3-distutils
+      - python3-setuptools
       - rcs
       - subversion
       - wget
@@ -528,10 +526,10 @@ parts:
       - --enable-json
       - --prefix=/usr
       - --bindir=/usr/bin
-      - --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET}
+      - --libdir=/usr/lib/${CRAFT_ARCH_TRIPLET_BUILD_FOR}
     stage-packages:
       - libjansson4
-      - libicu70
+      - libicu74
       - libxml2
       - libyaml-0-2
     override-pull: |
@@ -541,12 +539,13 @@ parts:
   libc-shm-shim:
     plugin: nil
     stage-snaps:
-      - libc-shm-shim/22/beta
+      - libc-shm-shim/24/beta
 
 build-snaps:
   - ant
 
 build-packages:
+  - build-essential
   - curl
   - libjansson-dev
   - libssl-dev
@@ -554,7 +553,7 @@ build-packages:
   - libxml2-dev
   - libxml2-utils
   - libyaml-dev
-  - openjdk-17-jdk-headless
+  - openjdk-21-jdk-headless
   - pkg-config
   - python3-venv
   - python3-pip
