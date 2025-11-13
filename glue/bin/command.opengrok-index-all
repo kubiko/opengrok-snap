@@ -9,7 +9,6 @@ exec \
     -c /${SNAP}/usr/bin/ctags \
     -s ${OPENGROK_SRC_ROOT} \
     -d ${OPENGROK_DATA_ROOT} \
-    -U http://localhost:${HTTP_PORT}/${WEBAPP_NAME} \
     -H -P -S -G \
     -W ${SNAP_COMMON}/etc/configuration.xml \
     "$@"
