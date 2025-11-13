@@ -378,7 +378,7 @@ parts:
       repo="https://github.com/apache/tomcat-native.git"
       tn_version="2.0."
       # ignore dereferenced tags
-      latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}\* | awk '{if ($2 !~ /^{}/ )  print $2}' | sed 's|refs/tags/||g' | sort -V | tail -1)
+      latest_tag=$(git ls-remote --tags ${repo}  ${tn_version}* | awk '{print $2}' | grep -v '\^{}' | sed 's|refs/tags/||g' | sort -V | tail -1)
       # if do not re-pull if already cloned
       if [ ! -e ${CRAFT_PART_SRC}/.git ]; then
         git clone \
